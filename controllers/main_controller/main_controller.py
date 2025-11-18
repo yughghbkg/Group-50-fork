@@ -94,7 +94,7 @@ while robot.step(TIME_STEP) != -1:
     lost_detector.check(localiser)
 
     # 3) Replanning when lost
-        if lost_detector.is_lost:
+    if lost_detector.is_lost:
         print("[lost] TRUE → calling replanner")
         # start pose will be taken from localiser inside replanner
         replanner.replan()
