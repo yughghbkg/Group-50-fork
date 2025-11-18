@@ -5,6 +5,6 @@ sceneTreePerspectives: 000000ff00000001000000030000001e000000c0000000fa010000000
 maximizedDockId: -1
 centralWidgetVisible: 1
 orthographicViewHeight: 1
-textFiles: 0 "controllers/main_controller/main_controller.py" "controllers/main_controller/lost_detector.py" "controllers/main_controller/path_planner.py" "controllers/main_controller/localisation.py"
+textFiles: 1 "controllers/main_controller/main_controller.py" "controllers/main_controller/lost_detector.py" "controllers/main_controller/path_planner.py" "controllers/main_controller/localisation.py" "controllers/main_controller/replanner.py"
 consoles: Console:All:All
 renderingDevicePerspectives: e-puck:camera;1;1;0;0

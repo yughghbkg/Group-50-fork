@@ -45,10 +45,6 @@ for i in range(robot.getNumberOfDevices()):
     print(dev.getName(), "| type:", dev.getNodeType())
 print("=== DEVICE LIST END ===")
 
-<<<<<<< HEAD
-localiser = Localiser(robot,  time_step=TIME_STEP)
-planner = Planner(robot)
-=======
 print("[main_controller] Init…")
 
 sanity_check_devices(robot)
@@ -60,17 +56,11 @@ localiser = Localiser(robot)
 planner = Planner(robot, localiser)
 
 # 3) Lost detector
->>>>>>> cedb5a159a671ff62851121f761adcaafe327ac4
 lost_detector = LostDetector(robot)
 
 # 4) Replanner
 replanner = Replanner(robot, planner)
 
-<<<<<<< HEAD
-print("[main_controller] entering loop")
-i = 0
-was_lost = False 
-=======
 # ============================================================
 # Set the world map for A*
 # ============================================================
@@ -95,7 +85,6 @@ print(f"[main_controller] First plan from {start} → {goal}")
 # ===========================================
 print("[main_controller] Entering main loop…")
 step_count = 0
->>>>>>> cedb5a159a671ff62851121f761adcaafe327ac4
 
 while robot.step(TIME_STEP) != -1:
 
@@ -104,14 +93,6 @@ while robot.step(TIME_STEP) != -1:
 
     # 2) Lost detection
     lost_detector.check(localiser)
-<<<<<<< HEAD
-    if not was_lost and lost_detector.is_lost:
-        print("[lost] TRUE — triggering replanning once")
-        est_x, est_y = localiser.estimate_position()
-        replanner.replan((est_x, est_y))
-
-    was_lost = lost_detector.is_lost
-=======
 
     # 3) Replanning when lost
     if lost_detector.is_lost:
@@ -120,7 +101,6 @@ while robot.step(TIME_STEP) != -1:
         replanner.replan(current_pos)
 
     # 4) Path following (movement control)
->>>>>>> cedb5a159a671ff62851121f761adcaafe327ac4
     planner.follow_path()
 
     # Debug heartbeat

@@ -8,7 +8,7 @@ class LostDetector:
         self.is_lost = False
         self.confidence = 1.0
 
-    # Proximity sensors (e-puck has ps0..ps7)
+        # Proximity sensors (e-puck has ps0..ps7)
         self.ps = [self.robot.getDevice(f'ps{i}') for i in range(8)]
         for s in self.ps:
             s.enable(self.time_step)
@@ -27,8 +27,8 @@ class LostDetector:
         self.ir_hist = deque(maxlen=10)      # IR change magnitude history
 
         # Tunables
-        self.min_move_rad = 0.01     # ~ small rad change that counts as “moved”
-        self.min_ir_change = 5.0     # raw IR delta that suggests environment change
+        self.min_move_rad = 0.01      # small rad change that counts as “moved”
+        self.min_ir_change = 5.0      # raw IR delta that suggests environment change
         self.confidence_drop = 0.05
         self.confidence_gain = 0.02
         self.lost_threshold = 0.4
@@ -45,7 +45,7 @@ class LostDetector:
         dl = l - self.prev_left
         dr = r - self.prev_right
         self.prev_left, self.prev_right = l, r
-        # simple proxy for “movement magnitude” (no heading needed yet)
+        # simple proxy for “movement magnitude”
         return abs(dl) + abs(dr)
 
     def _ir_change(self, ir):
@@ -56,6 +56,16 @@ class LostDetector:
         self.prev_ir = ir
         return d
 
+    def reset(self):
+        """Reset confidence + history after a successful replan/recovery."""
+        self.confidence = 1.0
+        self.is_lost = False
+        self.prev_left = None
+        self.prev_right = None
+        self.prev_ir = None
+        self.delta_hist.clear()
+        self.ir_hist.clear()
+
     def check(self, localiser=None):
         # Read sensors
         moved = self._odom_step()
@@ -65,12 +75,11 @@ class LostDetector:
         self.delta_hist.append(moved)
         self.ir_hist.append(ir_delta)
 
-        # Heuristics (planner-independent):
         # 1) Moving (odom) but environment not changing (IR) → suspicious
         moving_now = moved > self.min_move_rad
         env_static = ir_delta < self.min_ir_change
 
-        # 2) Not moving (odom) and IR spikes (e.g., bump/turn without odom) → suspicious
+        # 2) Not moving (odom) and IR spikes → suspicious (e.g. bumped/turned without odom)
         not_moving = moved <= self.min_move_rad
         env_spike = ir_delta > (self.min_ir_change * 4)
 
@@ -83,6 +92,6 @@ class LostDetector:
             self.confidence = min(1.0, self.confidence + self.confidence_gain)
 
         self.is_lost = (self.confidence < self.lost_threshold)
-        
-        # Debug (keep it light)
+
+        # Debug print
         print(f"[lost] moved={moved:.3f} irΔ={ir_delta:.1f} conf={self.confidence:.2f} lost={self.is_lost}")
