@@ -59,8 +59,7 @@ planner = Planner(robot, localiser)
 lost_detector = LostDetector(robot)
 
 # 4) Replanner
-replanner = Replanner(robot, planner)
-
+replanner = Replanner(robot, planner, localiser, lost_detector)
 # ============================================================
 # Set the world map for A*
 # ============================================================
@@ -95,10 +94,10 @@ while robot.step(TIME_STEP) != -1:
     lost_detector.check(localiser)
 
     # 3) Replanning when lost
-    if lost_detector.is_lost:
-        current_pos = localiser.estimate_position()
-        print(f"[lost] TRUE → calling replanner from {current_pos}")
-        replanner.replan(current_pos)
+        if lost_detector.is_lost:
+        print("[lost] TRUE → calling replanner")
+        # start pose will be taken from localiser inside replanner
+        replanner.replan()
 
     # 4) Path following (movement control)
     planner.follow_path()
