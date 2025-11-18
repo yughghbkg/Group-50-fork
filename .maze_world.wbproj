@@ -5,6 +5,6 @@ sceneTreePerspectives: 000000ff00000001000000030000001e000000c0000000fa010000000
 maximizedDockId: -1
 centralWidgetVisible: 1
 orthographicViewHeight: 1
-textFiles: 0 "myfirst/curriculum/controllers/advanced_odometry/advanced_odometry.c" "myfirst/curriculum/controllers/advanced_odometry/odometry.c"
+textFiles: 1 "lost_detector.py" "main_controller.py"
 consoles: Console:All:All
 renderingDevicePerspectives: e-puck:camera;1;1;0;0

@@ -9,19 +9,24 @@ robot = Robot()
 
 print("[main_controller] init…")
 
-localiser = Localiser(robot)
+localiser = Localiser(robot,  time_step=TIME_STEP)
 planner = Planner(robot)
 lost_detector = LostDetector(robot)
 replanner = Replanner(robot, planner)
 
 print("[main_controller] entering loop")
 i = 0
+was_lost = False 
+
 while robot.step(TIME_STEP) != -1:
     localiser.update()
     lost_detector.check(localiser)
-    if lost_detector.is_lost:
-        print("[lost] TRUE — would trigger replanning here")
-        replanner.replan(localiser.estimate_position())
+    if not was_lost and lost_detector.is_lost:
+        print("[lost] TRUE — triggering replanning once")
+        est_x, est_y = localiser.estimate_position()
+        replanner.replan((est_x, est_y))
+
+    was_lost = lost_detector.is_lost
     planner.follow_path()
     i += 1
     if i % 30 == 0:
