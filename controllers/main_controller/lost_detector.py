@@ -96,7 +96,7 @@ class LostDetector:
         # Debug print
         print(f"[lost] moved={moved:.3f} irΔ={ir_delta:.1f} conf={self.confidence:.2f} lost={self.is_lost}")
         
-            def reset(self):
+    def reset(self):
         """
         Reset lost state and confidence back to fully trusted.
         Call this after a successful replan.
@@ -109,5 +109,3 @@ class LostDetector:
         self.delta_hist.clear()
         self.ir_hist.clear()
         print("[lost] state reset (confidence=1.0)")
-
-

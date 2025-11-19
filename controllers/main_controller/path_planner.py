@@ -23,6 +23,11 @@ class Planner:
         self.world_map = None
         self.path = []
         self.current_wp_index = 0
+        
+        self.time_step = int(robot.getBasicTimeStep())
+        self.ps = [robot.getDevice(f"ps{i}") for i in range(8)]
+        for s in self.ps:
+            s.enable(self.time_step)
 
     # Load occupancy grid map (0 = free, 1 = obstacle)
     def set_map(self, world_map):
@@ -53,39 +58,61 @@ class Planner:
         if not self.path or self.current_wp_index >= len(self.path):
             self.stop()
             return
-
+    
         tx, ty = self.path[self.current_wp_index]
         rx, ry, heading = self.localiser.estimate_pose()
-
+    
         dx = tx - rx
         dy = ty - ry
         dist = math.hypot(dx, dy)
-
+    
         # Reached a waypoint
         if dist < 0.04:
             self.current_wp_index += 1
             return
-
+    
         target_angle = math.atan2(dy, dx)
         angle_err = self.angle_diff(target_angle, heading)
-
+    
         # If the heading error is large, rotate in place
         if abs(angle_err) > math.radians(35):
             turn = self.turn_speed if angle_err > 0 else -self.turn_speed
             self.left_motor.setVelocity(-turn)
             self.right_motor.setVelocity(turn)
             return
-
+    
         # Small heading error: drive forward while correcting
         correction = angle_err * 2.0
         left = self.forward_speed - correction
         right = self.forward_speed + correction
-
+    
         left = max(-self.max_speed, min(self.max_speed, left))
         right = max(-self.max_speed, min(self.max_speed, right))
-
+    
+        # === NEW: IR SAFETY OVERRIDE (don't ram the wall) ===
+        # ps0 and ps7 are the front sensors on the e-puck
+        front_left = self.ps[7].getValue()
+        front_right = self.ps[0].getValue()
+        front = max(front_left, front_right)
+    
+        WALL_THRESHOLD = 80.0  # you can tweak this
+    
+        if front > WALL_THRESHOLD:
+            # We're very close to a wall in front.
+            # Turn away while backing up a bit.
+            if front_left > front_right:
+                # more wall on the left → turn right while reversing
+                left = -0.5 * self.max_speed
+                right = -self.max_speed
+            else:
+                # more wall on the right → turn left while reversing
+                left = -self.max_speed
+                right = -0.5 * self.max_speed
+            # (no return here; we just override speeds for this step)
+    
         self.left_motor.setVelocity(left)
         self.right_motor.setVelocity(right)
+    
 
     # A* search on grid
     def a_star(self, start, goal):
