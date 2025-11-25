@@ -18,6 +18,7 @@ controllers/
     lost_detector.py
     path_planner.py
     replanner.py
+    
 
 worlds/
   maze_world.wbt
@@ -41,7 +42,8 @@ Detection of odometry drift, wheel slip, or sudden reorientation
 Trigger flag (is_lost=True) for the replanner
 Does not depend on external algorithms or packages
 
-3. Path Planner (path_planner.py) — Zhichao
+
+4. Path Planner (path_planner.py) — Zhichao
 Custom implementation of:
 A* graph search to navigate an occupancy grid
 Grid coordinate ↔ world coordinate conversion
@@ -49,7 +51,7 @@ Waypoint following logic
 Simple emergency collision handling
 Built without using external A* libraries
 
-4. Replanner (replanner.py) — Lateefat
+5. Replanner (replanner.py) — Lateefat
 Implements:
 Dynamic replanning when lost_detector confidence < threshold
 Resetting and re-initialising Markov belief
@@ -57,7 +59,7 @@ Selecting new local goal when lost
 Integrating planner + localiser outputs
 Fully hand-written logic
 
-5. Main Controller (main_controller.py) — All Members
+6. Main Controller (main_controller.py) — All Members
 Integrates all modules:
 Localisation update
 Lost detection
@@ -100,4 +102,22 @@ If sensors disagree with motion → confidence drops.
 When confidence < 0.4 → robot declares itself lost.
 Replanner generates a new path based on the new estimated position.
 Robot follows the new path to reach the goal.
+Belief Confidence Visualisation
+To evaluate the lost-state detection module, we implemented confidence logging inside lost_detector.py.
+At every control step, the system records:
+the current time-step index
+the robot’s localisation confidence value (0–1)
+These values are automatically saved to:
+controllers/main_controller/confidence_history.csv
+Generating the Confidence Plot
+A plotting script is included: plot_confidence.py
+Run: python3 plot_confidence.py
+This produces a graph showing how localisation confidence changes over time.
+This visualisation highlights:
+- stable movement (confidence near 1.0)
+- drift or inconsistent sensor readings (confidence decreases)
+- lost events (confidence < 0.4)
+- recovery after backoff + replanning (confidence rises again)
+The graph is included in the report as evidence of belief tracking and the robot’s diagnostic intelligence.
+
 This system integrates localisation, diagnostics, and planning — satisfying the module’s requirement for intelligent behaviour in a robot.
