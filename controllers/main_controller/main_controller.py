@@ -6,6 +6,7 @@ from path_planner import Planner
 from lost_detector import LostDetector
 from replanner import Replanner
 import sys
+import csv
 
 REQUIRED_DEVICES = [
     "left wheel motor",
@@ -157,3 +158,13 @@ while robot.step(TIME_STEP) != -1:
     if step_count % 50 == 0:
         est = localiser.estimate_position()
         print(f"[main_controller] tick {step_count}, est={est}")
+        
+print("[main_controller] Simulation ended, exporting confidence history...")
+
+with open("confidence_history.csv", "w") as f:
+    f.write("step,confidence\n")
+    for step, conf in lost_detector.conf_history:
+        f.write(f"{step},{conf}\n")
+
+print("[main_controller] Saved confidence_history.csv")
+

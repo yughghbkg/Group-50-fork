@@ -8,6 +8,10 @@ class LostDetector:
         self.is_lost = False
         self.confidence = 1.0
 
+        # For visualisation of belief confidence
+        self.conf_history = []
+        self.step_index = 0
+
         # Proximity sensors (e-puck has ps0..ps7)
         self.ps = [self.robot.getDevice(f'ps{i}') for i in range(8)]
         for s in self.ps:
@@ -28,7 +32,7 @@ class LostDetector:
 
         # Tunables
         self.min_move_rad = 0.01      # small rad change that counts as “moved”
-        self.min_ir_change = 5.0      # raw IR delta that suggests environment change
+        self.min_ir_change = 80.0       # raw IR delta that suggests environment change
         self.confidence_drop = 0.05
         self.confidence_gain = 0.02
         self.lost_threshold = 0.4
@@ -57,14 +61,23 @@ class LostDetector:
         return d
 
     def reset(self):
-        """Reset confidence + history after a successful replan/recovery."""
-        self.confidence = 1.0
+        """
+        Reset lost state and confidence back to fully trusted.
+        Call this after a successful replan.
+        """
         self.is_lost = False
+        self.confidence = 1.0
         self.prev_left = None
         self.prev_right = None
         self.prev_ir = None
         self.delta_hist.clear()
         self.ir_hist.clear()
+
+        # Reset confidence history for plotting
+        self.conf_history.clear()
+        self.step_index = 0
+
+        print("[lost] state reset (confidence=1.0)")
 
     def check(self, localiser=None):
         # Read sensors
@@ -91,21 +104,12 @@ class LostDetector:
         else:
             self.confidence = min(1.0, self.confidence + self.confidence_gain)
 
+        # Log for visualisation
+        self.step_index += 1
+        self.conf_history.append((self.step_index, self.confidence))
+
+        # Lost decision
         self.is_lost = (self.confidence < self.lost_threshold)
 
         # Debug print
         print(f"[lost] moved={moved:.3f} irΔ={ir_delta:.1f} conf={self.confidence:.2f} lost={self.is_lost}")
-        
-    def reset(self):
-        """
-        Reset lost state and confidence back to fully trusted.
-        Call this after a successful replan.
-        """
-        self.is_lost = False
-        self.confidence = 1.0
-        self.prev_left = None
-        self.prev_right = None
-        self.prev_ir = None
-        self.delta_hist.clear()
-        self.ir_hist.clear()
-        print("[lost] state reset (confidence=1.0)")
