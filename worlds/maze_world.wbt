@@ -1,4 +1,4 @@
-#VRML_SIM R2025a utf8
+#VRML_SIM R2023b utf8
 
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackground.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
@@ -9,29 +9,28 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/project
 WorldInfo {
 }
 Viewpoint {
-  orientation -0.5869629567497345 0.5753394961923345 0.5696129839854075 2.1231605416254906
-  position 0.003590365197522094 0.0764478837586332 2.917372421421047
+  orientation -0.5029998356302771 0.6741403204469281 0.5408567219732296 1.8871423321130998
+  position -0.10807832066192975 -0.018492037739291478 2.0697587222657092
 }
 TexturedBackground {
 }
 TexturedBackgroundLight {
 }
 RectangleArena {
-  translation -0.165131 -0.0644328 -0.03
-  floorSize 1.5 0.8
+  floorTileSize 0.3 0.3
   floorAppearance Parquetry {
-    type "light strip"
   }
+  wallThickness 0.05
 }
 DEF wall Solid {
-  translation 0.404877 -0.0175718 -0.0250158
+  translation 0.914877 -0.0175679 -0.0250158
   rotation -8.32677e-17 -1.33146e-17 1 -3.1415853071795863
   children [
     Shape {
       appearance PBRAppearance {
       }
       geometry Box {
-        size 0.01 0.1 0.2
+        size 0.05 0.1 0.2
       }
     }
   ]
@@ -44,74 +43,74 @@ DEF wall Solid {
   ]
 }
 DEF wall Solid {
-  translation 0.0150907 0.171557 -0.0250158
+  translation 0.0750871 0.191557 -0.0150158
   rotation 4.21215e-12 -2.63421e-11 1 6.32203e-06
   children [
     Shape {
       appearance PBRAppearance {
       }
       geometry Box {
-        size 0.01 0.1 0.2
+        size 0.05 0.3 0.2
       }
     }
   ]
   name "solid(24)"
   boundingObject Box {
-    size 0.01 0.1 0.2
+    size 0.05 0.3 0.2
   }
   recognitionColors [
     1 1 1
   ]
 }
 DEF wall Solid {
-  translation 0.358578 0.233737 -0.0250158
+  translation 0.228578 0.023737 -0.0250158
   rotation -6.99529e-17 -9.65821e-17 1 1.5708
   children [
     Shape {
       appearance PBRAppearance {
       }
       geometry Box {
-        size 0.01 0.2 0.2
+        size 0.05 0.35 0.2
       }
     }
   ]
   name "solid(23)"
   boundingObject Box {
-    size 0.01 0.2 0.2
+    size 0.05 0.35 0.2
   }
   recognitionColors [
     1 1 1
   ]
 }
 DEF wall Solid {
-  translation 0.200453 -0.177358 -0.0250158
-  rotation -6.99529e-17 -9.65821e-17 1 1.5708
+  translation 0.220453 -0.247358 -0.0250158
+  rotation -7.2781e-12 4.55161e-11 -1 -5.307179586466759e-06
   children [
     Shape {
       appearance PBRAppearance {
       }
       geometry Box {
-        size 0.01 0.2 0.2
+        size 0.05 0.5 0.2
       }
     }
   ]
   name "solid(31)"
   boundingObject Box {
-    size 0.01 0.2 0.2
+    size 0.05 0.5 0.2
   }
   recognitionColors [
     1 1 1
   ]
 }
 DEF wall Solid {
-  translation 0.309489 -0.161002 -0.0250158
+  translation 0.799489 -0.161002 -0.0250158
   rotation -8.32677e-17 -1.33146e-17 1 -3.1415853071795863
   children [
     Shape {
       appearance PBRAppearance {
       }
       geometry Box {
-        size 0.01 0.2 0.2
+        size 0.05 0.2 0.2
       }
     }
   ]
@@ -124,14 +123,14 @@ DEF wall Solid {
   ]
 }
 DEF wall Solid {
-  translation 0.233164 -0.409968 -0.0250158
+  translation 0.853164 -0.409968 -0.0250158
   rotation 4.21215e-12 -2.63421e-11 1 6.32203e-06
   children [
     Shape {
       appearance PBRAppearance {
       }
       geometry Box {
-        size 0.01 0.1 0.2
+        size 0.05 0.1 0.2
       }
     }
   ]
@@ -144,14 +143,14 @@ DEF wall Solid {
   ]
 }
 DEF wall Solid {
-  translation 0.352656 -0.0659016 -0.0250158
+  translation 0.802656 -0.0659002 -0.0250158
   rotation -6.99529e-17 -9.65821e-17 1 1.5708
   children [
     Shape {
       appearance PBRAppearance {
       }
       geometry Box {
-        size 0.01 0.1 0.2
+        size 0.05 0.1 0.2
       }
     }
   ]
@@ -164,14 +163,14 @@ DEF wall Solid {
   ]
 }
 DEF wall Solid {
-  translation 0.350462 -0.255011 -0.0250158
+  translation 0.820462 -0.255011 -0.0250158
   rotation -6.99529e-17 -9.65821e-17 1 1.5708
   children [
     Shape {
       appearance PBRAppearance {
       }
       geometry Box {
-        size 0.01 0.1 0.2
+        size 0.05 0.1 0.2
       }
     }
   ]
@@ -184,34 +183,14 @@ DEF wall Solid {
   ]
 }
 DEF wall Solid {
-  translation 0.458074 0.284154 -0.0250158
+  translation 0.913029 -0.203661 -0.0250158
   rotation -8.32677e-17 -1.33146e-17 1 -3.1415853071795863
   children [
     Shape {
       appearance PBRAppearance {
       }
       geometry Box {
-        size 0.01 0.1 0.2
-      }
-    }
-  ]
-  name "solid(28)"
-  boundingObject Box {
-    size 0.01 0.1 0.2
-  }
-  recognitionColors [
-    1 1 1
-  ]
-}
-DEF wall Solid {
-  translation 0.393029 -0.203661 -0.0250158
-  rotation -8.32677e-17 -1.33146e-17 1 -3.1415853071795863
-  children [
-    Shape {
-      appearance PBRAppearance {
-      }
-      geometry Box {
-        size 0.01 0.1 0.2
+        size 0.05 0.1 0.2
       }
     }
   ]
@@ -224,14 +203,14 @@ DEF wall Solid {
   ]
 }
 DEF wall Solid {
-  translation 0.107772 -0.226424 -0.0250158
+  translation 0.697772 -0.226424 -0.0250158
   rotation 4.21215e-12 -2.63421e-11 1 6.32203e-06
   children [
     Shape {
       appearance PBRAppearance {
       }
       geometry Box {
-        size 0.01 0.1 0.2
+        size 0.05 0.1 0.2
       }
     }
   ]
@@ -244,14 +223,14 @@ DEF wall Solid {
   ]
 }
 DEF wall Solid {
-  translation 0.156838 0.0679732 -0.0250158
+  translation 0.836838 0.0679783 -0.0250158
   rotation 4.21215e-12 -2.63421e-11 1 6.32203e-06
   children [
     Shape {
       appearance PBRAppearance {
       }
       geometry Box {
-        size 0.01 0.1 0.2
+        size 0.05 0.1 0.2
       }
     }
   ]
@@ -264,14 +243,14 @@ DEF wall Solid {
   ]
 }
 DEF wall Solid {
-  translation 0.353141 0.0256859 -0.0250158
+  translation 0.953141 0.0256875 -0.0250158
   rotation -6.99529e-17 -9.65821e-17 1 1.5708
   children [
     Shape {
       appearance PBRAppearance {
       }
       geometry Box {
-        size 0.01 0.1 0.2
+        size 0.05 0.1 0.2
       }
     }
   ]
@@ -284,34 +263,34 @@ DEF wall Solid {
   ]
 }
 DEF wall Solid {
-  translation -0.110301 0.28241 -0.0250158
-  rotation 4.21215e-12 -2.63421e-11 1 6.32203e-06
+  translation -0.0503004 0.22241 -0.0150158
+  rotation -9.65827e-17 6.99533e-17 1 -1.5707853071795865
   children [
     Shape {
       appearance PBRAppearance {
       }
       geometry Box {
-        size 0.01 0.1 0.2
+        size 0.05 0.5 0.2
       }
     }
   ]
   name "solid(19)"
   boundingObject Box {
-    size 0.01 0.1 0.2
+    size 0.05 0.5 0.2
   }
   recognitionColors [
     1 1 1
   ]
 }
 DEF wall Solid {
-  translation -0.0216251 -0.145995 -0.0250158
-  rotation 2.62398e-11 -1.64101e-10 1 1.01503e-06
+  translation -0.171625 -0.115995 -0.0250158
+  rotation -9.614315448080162e-09 0.01889219105544854 -0.9998215266321906 -5.307179586466759e-06
   children [
     Shape {
       appearance PBRAppearance {
       }
       geometry Box {
-        size 0.01 0.25 0.2
+        size 0.05 0.3 0.2
       }
     }
   ]
@@ -331,7 +310,7 @@ DEF wall Solid {
       appearance PBRAppearance {
       }
       geometry Box {
-        size 0.01 0.1 0.2
+        size 0.05 0.1 0.2
       }
     }
   ]
@@ -344,14 +323,14 @@ DEF wall Solid {
   ]
 }
 DEF wall Solid {
-  translation -0.739575 -0.0680028 -0.0250158
+  translation -0.729575 -0.0680027 -0.0250158
   rotation 9.65824e-17 -6.99531e-17 -1 1.57079
   children [
     Shape {
       appearance PBRAppearance {
       }
       geometry Box {
-        size 0.01 0.075 0.2
+        size 0.05 0.1 0.2
       }
     }
   ]
@@ -364,61 +343,51 @@ DEF wall Solid {
   ]
 }
 E-puck {
-  hidden position_0_0 -1173.9220720202616
-  hidden position_0_1 -1201.46190884082
-  hidden linearVelocity_0 0.06554178589611706 -0.06752919869851427 8.54886191082403e-05
-  hidden angularVelocity_0 0.003253988152862566 -0.003768213617919176 -1.119011817857442
-  hidden rotation_1 0 -1 0 5.249604884858482
-  hidden linearVelocity_1 0.045517889535496306 -0.046489654437818 -1.9710659017554746e-05
-  hidden angularVelocity_1 2.264162363263462 2.175229550081852 -1.1303041316745677
-  hidden rotation_2 0 1 0 4.909670137660716
-  hidden linearVelocity_2 0.08539091786909402 -0.08843890990616804 -0.00011915634416216258
-  hidden angularVelocity_2 4.517065532137188 4.3624579960881915 -1.1396158747309222
-  translation -0.6296887801815005 -0.019587568341673047 -0.03008824768797394
-  rotation 0.00032636936646748534 0.0008332481273960863 0.9999995995902172 2.3068079203052485
+  translation -0.453347 -0.431196 -0.0301613
+  rotation 5.764747104077286e-05 -1.4006484445373981e-05 0.9999999982402937 1.5618196338492323
   controller "main_controller"
 }
 DEF wall Solid {
-  translation -0.706863 -0.264415 -0.0250158
+  translation -0.376863 -0.304415 -0.0250158
   rotation 0.15771334979368387 -0.9863245039831896 0.04785887732876737 1.6884245805639693e-16
   children [
     Shape {
       appearance PBRAppearance {
       }
       geometry Box {
-        size 0.01 0.4 0.2
+        size 0.05 0.4 0.2
       }
     }
   ]
   boundingObject Box {
-    size 0.01 0.4 0.2
+    size 0.05 0.4 0.2
   }
   recognitionColors [
     1 1 1
   ]
 }
 DEF wall Solid {
-  translation -0.62735 0.11752 -0.0250158
+  translation -0.29735 0.02752 -0.0250158
   rotation -9.65811e-17 6.99524e-17 1 -1.5707953071795862
   children [
     Shape {
       appearance PBRAppearance {
       }
       geometry Box {
-        size 0.01 0.2 0.2
+        size 0.05 0.4 0.2
       }
     }
   ]
   name "solid(4)"
   boundingObject Box {
-    size 0.01 0.2 0.2
+    size 0.05 0.4 0.2
   }
   recognitionColors [
     1 1 1
   ]
 }
 DEF wall Solid {
-  translation -0.0378451 0.113732 -0.0250158
+  translation -0.877845 0.113732 -0.0250158
   rotation -9.65811e-17 6.99524e-17 1 -1.5707953071795862
   children [
     Shape {
@@ -438,7 +407,7 @@ DEF wall Solid {
   ]
 }
 DEF wall Solid {
-  translation -0.0142193 -0.280615 -0.0250158
+  translation 0.795781 -0.420615 -0.0250158
   rotation -9.65811e-17 6.99524e-17 1 -1.5707953071795862
   children [
     Shape {
@@ -458,7 +427,7 @@ DEF wall Solid {
   ]
 }
 DEF wall Solid {
-  translation -0.261532 -0.188197 -0.0250158
+  translation -0.261532 -0.718197 -0.0250158
   rotation -9.65811e-17 6.99524e-17 1 -1.5707953071795862
   children [
     Shape {
@@ -478,7 +447,7 @@ DEF wall Solid {
   ]
 }
 DEF wall Solid {
-  translation -0.399107 -0.031287 -0.0250158
+  translation -1.14911 -0.031287 -0.0250158
   rotation -9.65811e-17 6.99524e-17 1 -1.5707953071795862
   children [
     Shape {
@@ -498,7 +467,7 @@ DEF wall Solid {
   ]
 }
 DEF wall Solid {
-  translation -0.480469 0.216353 -0.0250158
+  translation -0.480469 0.66635 -0.0250158
   rotation -9.65811e-17 6.99524e-17 1 -1.5707953071795862
   children [
     Shape {
@@ -518,7 +487,7 @@ DEF wall Solid {
   ]
 }
 DEF wall Solid {
-  translation -0.232058 0.164287 -0.0250158
+  translation -0.232058 0.554287 -0.0250158
   rotation 4.21215e-12 -2.63421e-11 1 6.32203e-06
   children [
     Shape {
@@ -558,7 +527,7 @@ DEF wall Solid {
   ]
 }
 DEF wall Solid {
-  translation -0.393795 0.024357 -0.0250158
+  translation -0.953795 0.024353 -0.0250158
   rotation 4.21215e-12 -2.63421e-11 1 6.32203e-06
   children [
     Shape {
@@ -578,7 +547,7 @@ DEF wall Solid {
   ]
 }
 DEF wall Solid {
-  translation -0.0685038 -0.0247083 -0.0250158
+  translation -0.578504 -0.0247084 -0.0250158
   rotation -6.99529e-17 -9.65821e-17 1 1.5708
   children [
     Shape {
@@ -598,27 +567,27 @@ DEF wall Solid {
   ]
 }
 DEF wall Solid {
-  translation -0.141935 -0.235474 -0.0250158
-  rotation 4.21215e-12 -2.63421e-11 1 6.32203e-06
+  translation -0.091935 -0.275474 -0.025016
+  rotation -6.99529e-17 -9.65821e-17 1 1.5708
   children [
     Shape {
       appearance PBRAppearance {
       }
       geometry Box {
-        size 0.01 0.1 0.2
+        size 0.05 0.3 0.2
       }
     }
   ]
   name "solid(9)"
   boundingObject Box {
-    size 0.01 0.1 0.2
+    size 0.05 0.3 0.2
   }
   recognitionColors [
     1 1 1
   ]
 }
 DEF wall Solid {
-  translation -0.384396 -0.236064 -0.0250158
+  translation -0.384396 -0.736064 -0.0250158
   rotation 4.21215e-12 -2.63421e-11 1 6.322027276636737e-06
   children [
     Shape {
@@ -678,7 +647,7 @@ DEF wall Solid {
   ]
 }
 DEF GOAL Solid {
-  translation 0.522863 0.277041 0
+  translation 0.472863 0.467041 0
   rotation 0 0 1 -1.5707953071795862
   children [
     Shape {
@@ -688,7 +657,7 @@ DEF GOAL Solid {
         }
       }
       geometry Plane {
-        size 0.1 0.1
+        size 0.05 0.05
       }
     }
   ]
