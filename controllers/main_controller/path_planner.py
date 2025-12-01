@@ -2,7 +2,7 @@ import math
 import heapq
 
 class Planner:
-    # Basic initialization: store robot, localiser, and set motor modes
+    # 基础初始化：存储机器人、定位器，并设置电机模式
     def __init__(self, robot, localiser, cell_size=0.05):
         self.robot = robot
         self.localiser = localiser
@@ -15,7 +15,7 @@ class Planner:
         self.left_motor.setVelocity(0)
         self.right_motor.setVelocity(0)
 
-        # Speed parameters commonly tuned for differential drive
+        # 差分驱动常用的速度参数（可调节）
         self.max_speed = 6.28
         self.turn_speed = 3.5
         self.forward_speed = 4.0
@@ -29,31 +29,39 @@ class Planner:
         for s in self.ps:
             s.enable(self.time_step)
 
-    # Load occupancy grid map (0 = free, 1 = obstacle)
+    # 加载占据栅格地图（0=空闲，1=障碍物）
     def set_map(self, world_map):
         self.world_map = world_map
         self.map_h = len(world_map)
         self.map_w = len(world_map[0])
 
-    # Run A*: input world coords, output continuous-space path
+    # 运行A*算法：输入世界坐标，输出连续空间路径
     def plan(self, start_world, goal_world):
-        print(f"[planner] planning from {start_world} to {goal_world}")
+        # print("=======================================")
+        # print("=======================================")
+        # print("=======================================")
+        print("我开始规划了")
+        print(f"[规划器] 正在规划从 {start_world} 到 {goal_world} 的路径")
 
         start_cell = self.world_to_cell(start_world)
         goal_cell = self.world_to_cell(goal_world)
 
         path_cells = self.a_star(start_cell, goal_cell)
         if path_cells is None:
-            print("[planner] no path")
+            print("[规划器] 无可行路径")
             self.path = []
             return
 
-        # Convert grid path to world coordinates
+        # 将栅格路径转换为世界坐标
         self.path = [self.cell_to_world(c) for c in path_cells]
         self.current_wp_index = 0
-        print(f"[planner] path length = {len(self.path)}")
+        print(f"[规划器] 路径长度 = {len(self.path)}")
+        print("我规划完成了")
+        # print("=======================================")
+        # print("=======================================")
+        # print("=======================================")
 
-    # Follow the planned path and drive the robot
+    # 跟踪规划路径并驱动机器人
     def follow_path(self):
         if not self.path or self.current_wp_index >= len(self.path):
             self.stop()
@@ -66,7 +74,7 @@ class Planner:
         dy = ty - ry
         dist = math.hypot(dx, dy)
     
-        # Reached a waypoint
+        # 到达路点
         if dist < 0.04:
             self.current_wp_index += 1
             return
@@ -74,14 +82,14 @@ class Planner:
         target_angle = math.atan2(dy, dx)
         angle_err = self.angle_diff(target_angle, heading)
     
-        # If the heading error is large, rotate in place
+        # 如果航向误差较大，原地旋转
         if abs(angle_err) > math.radians(35):
             turn = self.turn_speed if angle_err > 0 else -self.turn_speed
             self.left_motor.setVelocity(-turn)
             self.right_motor.setVelocity(turn)
             return
     
-        # Small heading error: drive forward while correcting
+        # 航向误差较小：前进的同时修正方向
         correction = angle_err * 2.0
         left = self.forward_speed - correction
         right = self.forward_speed + correction
@@ -89,32 +97,32 @@ class Planner:
         left = max(-self.max_speed, min(self.max_speed, left))
         right = max(-self.max_speed, min(self.max_speed, right))
     
-        # === NEW: IR SAFETY OVERRIDE (don't ram the wall) ===
-        # ps0 and ps7 are the front sensors on the e-puck
+        # === 新增：红外安全覆盖（防止撞墙） ===
+        # ps0和ps7是e-puck的前向传感器
         front_left = self.ps[7].getValue()
         front_right = self.ps[0].getValue()
         front = max(front_left, front_right)
     
-        WALL_THRESHOLD = 80.0  # you can tweak this
+        WALL_THRESHOLD = 80.0  # 可调节此阈值
     
         if front > WALL_THRESHOLD:
-            # We're very close to a wall in front.
-            # Turn away while backing up a bit.
+            # 前方非常靠近墙壁
+            # 后退的同时转向远离墙壁
             if front_left > front_right:
-                # more wall on the left → turn right while reversing
+                # 左侧墙壁更近 → 倒车并右转
                 left = -0.5 * self.max_speed
                 right = -self.max_speed
             else:
-                # more wall on the right → turn left while reversing
+                # 右侧墙壁更近 → 倒车并左转
                 left = -self.max_speed
                 right = -0.5 * self.max_speed
-            # (no return here; we just override speeds for this step)
+            # （此处不return，仅覆盖当前步骤的速度）
     
         self.left_motor.setVelocity(left)
         self.right_motor.setVelocity(right)
     
 
-    # A* search on grid
+    # 栅格上的A*搜索
     def a_star(self, start, goal):
         (sy, sx) = start
         (gy, gx) = goal
@@ -125,7 +133,7 @@ class Planner:
         came_from = {}
         g_score = { (sy, sx): 0 }
 
-        dirs = [(1,0), (-1,0), (0,1), (0,-1)]  # 4-neighborhood moves
+        dirs = [(1,0), (-1,0), (0,1), (0,-1)]  # 4邻域移动
 
         while open_set:
             _, (y, x) = heapq.heappop(open_set)
@@ -139,7 +147,7 @@ class Planner:
 
                 if not (0 <= ny < self.map_h and 0 <= nx < self.map_w):
                     continue
-                if self.world_map[ny][nx] == 1:  # obstacle
+                if self.world_map[ny][nx] == 1:  # 障碍物
                     continue
 
                 tentative = g_score[(y, x)] + 1
@@ -151,7 +159,7 @@ class Planner:
 
         return None
 
-    # Reconstruct final path by backtracking
+    # 通过回溯重建最终路径
     def reconstruct_path(self, came_from, start, goal):
         path = []
         node = goal
@@ -162,9 +170,13 @@ class Planner:
         path.reverse()
         return path
 
-    # Convert world coordinates → grid index
+    # 世界坐标 → 栅格索引
     def world_to_cell(self, pos):
         x, y = pos
+        # print("=======================================")
+        # print("=======================================")
+        # print("=======================================")
+        print(f"[path_planner]我得到的世界坐标: ({x:.3f}, {y:.3f})")
 
         width_m = self.map_w * self.cell_size
         height_m = self.map_h * self.cell_size
@@ -177,10 +189,15 @@ class Planner:
 
         ix = max(0, min(self.map_w - 1, ix))
         iy = max(0, min(self.map_h - 1, iy))
+        print(f"[path_planner]我得到的仿真世界坐标: ({x:.3f}, {y:.3f})")
+        # print("=======================================")
+        # print("=======================================")
+        # print("=======================================")
+
 
         return (iy, ix)
 
-    # Convert grid index → world coordinates (center of cell)
+    # 栅格索引 → 世界坐标（单元格中心）
     def cell_to_world(self, cell):
         iy, ix = cell
 
@@ -195,14 +212,14 @@ class Planner:
 
         return (wx, wy)
 
-    # Normalize angle difference into [-pi, pi]
+    # 将角度差归一化到[-pi, pi]范围
     def angle_diff(self, a, b):
         d = a - b
         while d > math.pi: d -= 2*math.pi
         while d < -math.pi: d += 2*math.pi
         return d
 
-    # Stop robot motion
+    # 停止机器人运动
     def stop(self):
         self.left_motor.setVelocity(0)
         self.right_motor.setVelocity(0)
