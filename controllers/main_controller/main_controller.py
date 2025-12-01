@@ -36,7 +36,7 @@ def sanity_check_devices(robot):
 
 
 # ===========================================
-# Initialisation
+# Initialization
 # ===========================================
 robot = Robot()
 
@@ -115,7 +115,7 @@ while robot.step(TIME_STEP) != -1:
 
     # 3) If we just became lost while in FOLLOW mode → enter BACKOFF mode
     if lost_detector.is_lost and mode == MODE_FOLLOW:
-        print("[main_controller] lost detected → entering BACKOFF mode")
+        print("[main_controller] Following planned path, but I am lost")
         mode = MODE_BACKOFF
         backoff_steps = 20   # reverse for 20 ticks
         turn_steps = 20      # then turn for 20 ticks
@@ -123,7 +123,7 @@ while robot.step(TIME_STEP) != -1:
     # 4) Handle BACKOFF behaviour (reverse + turn), then replan once
     if mode == MODE_BACKOFF:
         est_before = localiser.estimate_position()
-        print(f"[BACKOFF] BEFORE: pose={est_before}, backoff_steps={backoff_steps}, turn_steps={turn_steps}")
+        print(f"[main_controller] I am lost, I will back off. BEFORE: pose={est_before}, backoff_steps={backoff_steps}, turn_steps={turn_steps}")
 
         if backoff_steps > 0:
             # reverse away from the wall
@@ -139,7 +139,7 @@ while robot.step(TIME_STEP) != -1:
 
         else:
             # finished backing off: now replan once and return to FOLLOW mode
-            print("[main_controller] backoff complete → calling replanner")
+            print("[main_controller] Backoff complete, I will replan my route now")
             replanner.replan()
             mode = MODE_FOLLOW
 
@@ -147,7 +147,7 @@ while robot.step(TIME_STEP) != -1:
         step_count += 1
         if step_count % 50 == 0:
             est = localiser.estimate_position()
-            print(f"[main_controller] tick {step_count}, est={est}")
+            print(f"[main_controller] This is control step {step_count}, I estimate my position as={est}")
         continue
 
     # 5) Normal path following (only when not backing off)
@@ -157,7 +157,7 @@ while robot.step(TIME_STEP) != -1:
     step_count += 1
     if step_count % 50 == 0:
         est = localiser.estimate_position()
-        print(f"[main_controller] tick {step_count}, est={est}")
+        print(f"[main_controller] This is control step {step_count}, I estimate my position as={est}")
         
 print("[main_controller] Simulation ended, exporting confidence history...")
 
@@ -167,4 +167,3 @@ with open("confidence_history.csv", "w") as f:
         f.write(f"{step},{conf}\n")
 
 print("[main_controller] Saved confidence_history.csv")
-

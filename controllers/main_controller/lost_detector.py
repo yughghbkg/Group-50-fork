@@ -77,7 +77,7 @@ class LostDetector:
         self.conf_history.clear()
         self.step_index = 0
 
-        print("[lost] state reset (confidence=1.0)")
+        print("[lost_detector] Robot trust level reset to 1")
 
     def check(self, localiser=None):
         # Read sensors
@@ -112,4 +112,9 @@ class LostDetector:
         self.is_lost = (self.confidence < self.lost_threshold)
 
         # Debug print
-        print(f"[lost] moved={moved:.3f} irΔ={ir_delta:.1f} conf={self.confidence:.2f} lost={self.is_lost}")
+        print(
+            f"[lost_detector] Odom movement magnitude:{moved:.3f} "
+            f"IR change magnitude:{ir_delta:.1f} "
+            f"Robot localisation confidence:{self.confidence:.2f} "
+            f"Is robot lost:{self.is_lost}"
+        )

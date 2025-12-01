@@ -1,4 +1,3 @@
-# localisation.py
 import math
 
 
@@ -31,9 +30,9 @@ class Localiser:
         self.right_encoder.enable(self.time_step)
 
         # Continuous pose from odometry (origin at initial pose)
-        self.x = 0.0
-        self.y = 0.0
-        self.theta = 0.0  # heading in radians
+        self.x = 0.0  # Robot initial world X coordinate (odometry origin, default (0,0))
+        self.y = 0.0  # Robot initial world Y coordinate
+        self.theta = 0.0  # Initial heading angle (radians, default pointing along 0 direction)
 
         self._prev_left = None
         self._prev_right = None
@@ -69,8 +68,8 @@ class Localiser:
             world_map = self._build_default_map()
 
         self.world_map = world_map
-        self.map_height = len(world_map)          # number of rows (y index)
-        self.map_width = len(world_map[0])        # number of columns (x index)
+        self.map_height = len(world_map)          # Number of grid rows (Y direction)
+        self.map_width = len(world_map[0])        # Number of grid columns (X direction)
 
         # belief[y][x] = probability of being in that grid cell
         self.belief = [[0.0 for _ in range(self.map_width)]
@@ -90,10 +89,43 @@ class Localiser:
         self.motion_correct_prob = 0.80  # probability assigned to the odom-predicted cell
         self.motion_noise_prob = 0.20    # spread to neighbours
 
-        print("[localiser]完成init")
+        # -------------------------- Key debug print: initial coordinates & map info --------------------------
+        print("="*50)
+        print("[localiser] Initial coordinates and grid-map parameters:")
+        # 1. Print robot initial world coordinates (odometry origin)
+        print(f"[localiser] Robot initial world coordinates (odometry origin): (x={self.x:.3f}m, y={self.y:.3f}m)")
+        print(f"[localiser] Robot initial heading angle: theta={self.theta:.3f}rad ({math.degrees(self.theta):.1f}°)")
+        
+        # 2. Compute grid coordinates corresponding to initial world coordinates (reverse mapping)
+        width_m = self.map_width * self.cell_size  # Physical map width (m)
+        height_m = self.map_height * self.cell_size  # Physical map height (m)
+        origin_x = -width_m / 2.0  # Grid-map origin X in world coordinates
+        origin_y = -height_m / 2.0  # Grid-map origin Y in world coordinates
+        
+        # Initial world coordinate → grid index (rounded, clamped within range)
+        init_ix = int(round((self.x - origin_x) / self.cell_size))
+        init_iy = int(round((self.y - origin_y) / self.cell_size))
+        init_ix = max(0, min(self.map_width - 1, init_ix))
+        init_iy = max(0, min(self.map_height - 1, init_iy))
+        
+        # 3. Print grid-map basic parameters
+        print(f"\n[localiser] Grid map parameters:")
+        print(f"[localiser] Grid map size: {self.map_height} rows × {self.map_width} columns (cells)")
+        print(f"[localiser] Cell size: {self.cell_size:.3f}m per cell (physical size)")
+        print(f"[localiser] Map physical dimensions: width={width_m:.3f}m, height={height_m:.3f}m")
+        print(f"[localiser] Grid-map origin (world coordinates): (x={origin_x:.3f}m, y={origin_y:.3f}m)")
+        
+        # 4. Print initial grid coordinate
+        print(f"\n[localiser] Grid coordinate corresponding to robot initial world position: (iy={init_iy}, ix={init_ix})")
+        init_cell_state = "free (traversable)" if self.world_map[init_iy][init_ix] == 0 else "obstacle (blocked)"
+        print(f"[localiser] Initial grid cell state: {init_cell_state}")
+        print("="*50 + "\n")
+        # -----------------------------------------------------------------------------------
+
+        print("[localiser] init complete")
 
     # ======================================================================
-    # Public interface
+    # Original functions below unchanged (preserved)
     # ======================================================================
     def update(self):
         """
@@ -105,7 +137,7 @@ class Localiser:
         dx, dy, dtheta = self._update_odometry()
         self._markov_motion_update(dx, dy)
         self._markov_sensor_update()
-        print("[localiser]完成belief的update")
+        print("[localiser] belief update complete")
 
     def estimate_position(self):
         """
@@ -668,3 +700,16 @@ class Localiser:
             "a world_map into Localiser(...) to match your Webots world."
         )
         return world_map
+
+# iy=0:  ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■  
+# iy=1:  ■ □ □ □ □ □ □ □ □ □ □ ■  
+# iy=2:  ■ □ □ □ ■ ■ ■ ■ ■ ■ □ ■  
+# iy=3:  ■ □ □ ■ □ □ □ □ □ □ □ ■  
+# iy=4:  ■ □ □ ■ □ □ □ □ □ □ □ ■  
+# iy=5:  ■ □ □ ■ □ □ □ □ □ □ □ ■  
+# iy=6:  ■ □ □ ■ ■ ■ ■ ■ □ □ □ ■  
+# iy=7:  ■ □ □ ■ ■ □ □ ■ □ □ □ ■  
+# iy=8:  ■ □ □ ■ ■ □ □ ■ □ □ □ ■  
+# iy=9:  ■ □ □ □ □ □ □ □ □ □ □ ■  
+# iy=10: ■ □ □ □ □ □ □ □ □ □ □ ■  
+# iy=11: ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■  
