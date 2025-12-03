@@ -666,39 +666,33 @@ class Localiser:
         """
         # Example: 12x12 grid with outer walls and some internal barriers.
         # Replace this with your real maze occupancy grid.
-        w = 12  # number of columns
-        h = 12  # number of rows
-
-        world_map = [[0 for _ in range(w)] for _ in range(h)]
-
-        # Outer walls
-        for iy in range(h):
-            for ix in range(w):
-                if iy == 0 or iy == h - 1 or ix == 0 or ix == w - 1:
-                    world_map[iy][ix] = 1
-
-        # Example internal walls (you should adapt to your maze):
-        # A vertical wall near the left
-        for iy in range(2, 9):
-            world_map[iy][3] = 1
-
-        # A horizontal wall near the top
-        for ix in range(4, 10):
-            world_map[2][ix] = 1
+        world_map = [
+                [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+                [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+                [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+                [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+                [0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+                [0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+                [0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+                [0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+                [1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            ]
+    
+        print("[localiser] Using REAL Webots occupancy grid")
 
         # A U-shaped structure in the middle
-        for ix in range(4, 8):
-            world_map[6][ix] = 1
-        for iy in range(6, 9):
-            world_map[iy][4] = 1
-        for iy in range(6, 9):
-            world_map[iy][7] = 1
-
-        print(
-            "[localiser] WARNING: using a default maze occupancy grid.\n"
-            "Replace _build_default_map() with your actual maze layout or pass\n"
-            "a world_map into Localiser(...) to match your Webots world."
-        )
+     
         return world_map
 
 # iy=0:  ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■ ■  

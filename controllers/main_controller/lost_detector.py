@@ -32,10 +32,10 @@ class LostDetector:
 
         # Tunables
         self.min_move_rad = 0.01      # small rad change that counts as “moved”
-        self.min_ir_change = 80.0       # raw IR delta that suggests environment change
+        self.min_ir_change = 5.0      # raw IR delta that suggests environment change
         self.confidence_drop = 0.05
         self.confidence_gain = 0.02
-        self.lost_threshold = 0.4
+        self.lost_threshold = 0.6
 
     def _read_ir(self):
         return [s.getValue() for s in self.ps]
@@ -77,7 +77,7 @@ class LostDetector:
         self.conf_history.clear()
         self.step_index = 0
 
-        print("[lost_detector] Robot trust level reset to 1")
+        print("[lost] state reset (confidence=1.0)")
 
     def check(self, localiser=None):
         # Read sensors
@@ -97,7 +97,17 @@ class LostDetector:
         env_spike = ir_delta > (self.min_ir_change * 4)
 
         suspicious = (moving_now and env_static) or (not_moving and env_spike)
-
+        
+        
+# NEW: extra suspicion when driving very close to a wall
+        front_left = self.ps[7].getValue()
+        front_right = self.ps[0].getValue()
+        front = max(front_left, front_right)
+        
+        WALL_SUSPICION = 200.0  # tweak this based on your IR values
+        
+        if moving_now and front > WALL_SUSPICION:
+            suspicious = True
         # Confidence update
         if suspicious:
             self.confidence = max(0.0, self.confidence - self.confidence_drop)
@@ -112,9 +122,4 @@ class LostDetector:
         self.is_lost = (self.confidence < self.lost_threshold)
 
         # Debug print
-        print(
-            f"[lost_detector] Odom movement magnitude:{moved:.3f} "
-            f"IR change magnitude:{ir_delta:.1f} "
-            f"Robot localisation confidence:{self.confidence:.2f} "
-            f"Is robot lost:{self.is_lost}"
-        )
+        print(f"[lost] moved={moved:.3f} irΔ={ir_delta:.1f} conf={self.confidence:.2f} lost={self.is_lost}")
