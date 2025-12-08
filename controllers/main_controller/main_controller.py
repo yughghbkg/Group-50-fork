@@ -258,28 +258,3 @@ while robot.step(TIME_STEP) != -1:
         reached_goal = True
         break
 
-print("[main_controller] Simulation ended, exporting logs...")
-
-if EXPERIMENT_MODE == "adaptive":
-    with open("confidence_history.csv", "w", newline="") as f:
-        writer = csv.writer(f)
-        writer.writerow(["step", "confidence"])
-        for step_idx, conf_val in lost_detector.conf_history:
-            writer.writerow([step_idx, conf_val])
-    print("[main_controller] Saved confidence_history.csv")
-
-log_filename = (
-    "experiment_log_adaptive.csv"
-    if EXPERIMENT_MODE == "adaptive"
-    else "experiment_log_baseline.csv"
-)
-
-with open(log_filename, "w", newline="") as f:
-    writer = csv.writer(f)
-    writer.writerow(csv_header)
-    writer.writerows(log_rows)
-
-print(f"[main_controller] Saved {log_filename}")
-print(f"[main_controller] reached_goal={reached_goal}, "
-      f"final_path_length={accum_path_len:.3f} m")
-print("[main_controller] Done.")

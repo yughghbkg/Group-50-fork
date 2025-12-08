@@ -490,6 +490,3 @@ class Localiser:
     
         print("[localiser] Using REAL Webots occupancy grid")
 
-     
-        return world_map
-
