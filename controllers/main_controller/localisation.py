@@ -2,6 +2,10 @@ import math
 
 
 class Localiser:
+    """
+    Odometry + simplified 2D Markov localisation on a grid.
+    """
+
     def __init__(
         self,
         robot,
@@ -14,6 +18,7 @@ class Localiser:
         self.robot = robot
         self.time_step = time_step
 
+        # Odometry setup
         self.wheel_radius = wheel_radius
         self.axle_length = axle_length
 
@@ -22,6 +27,7 @@ class Localiser:
         self.left_encoder.enable(self.time_step)
         self.right_encoder.enable(self.time_step)
 
+        # Continuous pose from odometry (origin at initial pose)
         self.x = 0.0
         self.y = 0.0
         self.theta = 0.0
@@ -29,6 +35,7 @@ class Localiser:
         self._prev_left = None
         self._prev_right = None
 
+        # IR sensors for the Markov sensor model
         self.ir_names = [f"ps{i}" for i in range(8)]
         self.ir_sensors = []
         for name in self.ir_names:
@@ -45,6 +52,7 @@ class Localiser:
         self.ir_max_value = 3000.0
         self.sensor_max_range = 0.25
 
+        # Markov grid and belief
         self.cell_size = cell_size
 
         if world_map is None:
@@ -66,9 +74,11 @@ class Localiser:
 
         self._init_uniform_belief()
 
+        # Motion model parameters
         self.motion_correct_prob = 0.80
         self.motion_noise_prob = 0.20
 
+        # Debug: initial coordinates & map info
         print("=" * 50)
         print("[localiser] Initial coordinates and grid-map parameters:")
         print(f"[localiser] Robot initial world coordinates (odometry origin): "
@@ -102,12 +112,22 @@ class Localiser:
         print("[localiser] init complete")
 
     def update(self):
+        """
+        One localisation update step:
+          1) Update odometry pose.
+          2) Markov motion update.
+          3) Markov sensor update.
+        """
         dx, dy, dtheta = self._update_odometry()
         self._markov_motion_update(dx, dy)
         self._markov_sensor_update()
         print("[localiser] belief update complete")
 
     def estimate_position(self):
+        """
+        Returns a 2D position estimate (x, y) from the MAP cell of the belief.
+        Falls back to odometry if belief is degenerate.
+        """
         max_p = 0.0
         best_cell = None
         for iy in range(self.map_height):
@@ -125,14 +145,29 @@ class Localiser:
         return (world_x, world_y)
 
     def estimate_pose(self):
+        """Return the continuous odometry pose (x, y, theta)."""
         return (self.x, self.y, self.theta)
 
     def get_belief(self, copy=True):
+        """
+        Returns the current belief grid.
+
+        Args:
+            copy (bool): if True, returns a deep copy.
+        """
         if not copy:
             return self.belief
         return [row[:] for row in self.belief]
 
     def reset_belief(self, mode="uniform", center_cell=None, sigma_cells=2.0):
+        """
+        Reset the belief distribution.
+
+        Args:
+            mode (str): "uniform" or "gaussian".
+            center_cell (tuple|None): (iy, ix) center for Gaussian mode.
+            sigma_cells (float): std dev in cell units for Gaussian.
+        """
         if mode.lower() == "uniform":
             self._init_uniform_belief()
             return
@@ -168,6 +203,12 @@ class Localiser:
         self._init_uniform_belief()
 
     def measure_uncertainty(self, method="entropy"):
+        """
+        Measure localisation uncertainty.
+
+        Args:
+            method (str): "entropy" or "variance".
+        """
         m = method.lower()
         if m == "entropy":
             return self._compute_entropy()
@@ -176,7 +217,15 @@ class Localiser:
         else:
             raise ValueError(f"Unknown uncertainty method: {method}")
 
+    # ----------------- Odometry internals -----------------
     def _update_odometry(self):
+        """
+        Read wheel encoders and update (x, y, theta) using a
+        differential drive odometry model.
+
+        Returns:
+            (dx, dy, dtheta) since last update in world frame.
+        """
         left = self.left_encoder.getValue()
         right = self.right_encoder.getValue()
 
@@ -210,7 +259,11 @@ class Localiser:
 
         return dx, dy, dtheta
 
+    # ----------------- Markov motion model -----------------
     def _markov_motion_update(self, dx, dy):
+        """
+        Simple motion update to the belief based on odometry displacement.
+        """
         if not self.free_cells or self.cell_size <= 0.0:
             return
 
@@ -291,7 +344,11 @@ class Localiser:
         self._normalize_belief(new_belief)
         self.belief = new_belief
 
+    # ----------------- Markov sensor model -----------------
     def _markov_sensor_update(self):
+        """
+        Update the belief using IR readings.
+        """
         if not self.free_cells:
             return
 
@@ -322,9 +379,12 @@ class Localiser:
                     new_belief[iy][ix] /= total
             self.belief = new_belief
         else:
+            # keep motion-updated belief if all likelihoods collapse
             pass
 
+    # ----------------- Sensor helpers -----------------
     def _read_ir_group_values(self):
+        """Return aggregated IR values [front, left, back, right]."""
         raw = [s.getValue() for s in self.ir_sensors]
         raw = [max(0.0, min(v, self.ir_max_value)) for v in raw]
 
@@ -336,6 +396,11 @@ class Localiser:
         return [front, left, back, right]
 
     def _expected_ir_for_cell(self, iy, ix):
+        """
+        Compute expected IR readings [front, left, back, right] for a given cell.
+        Directions in grid coordinates:
+            front: +x, left: +y, back: -x, right: -y
+        """
         dist_front = self._distance_to_wall(iy, ix, dy=0, dx=1)
         dist_left = self._distance_to_wall(iy, ix, dy=1, dx=0)
         dist_back = self._distance_to_wall(iy, ix, dy=0, dx=-1)
@@ -349,6 +414,10 @@ class Localiser:
         ]
 
     def _distance_to_wall(self, iy, ix, dy, dx):
+        """
+        From cell (iy, ix), march along direction (dy, dx) until hitting an
+        occupied cell or leaving the map, and return distance in meters.
+        """
         steps = 0
         while True:
             steps += 1
@@ -365,11 +434,21 @@ class Localiser:
                 return dist
 
     def _distance_to_ir_strength(self, dist):
+        """
+        Map distance to expected IR strength:
+            dist = 0   → ir_max_value
+            dist >= R  → 0
+        Linear model.
+        """
         if dist >= self.sensor_max_range:
             return 0.0
         return self.ir_max_value * (1.0 - dist / self.sensor_max_range)
 
     def _sensor_likelihood(self, measured, expected):
+        """
+        Likelihood based on average absolute difference between
+        measured and expected (both normalised to [0, 1]).
+        """
         diffs = []
         for m, e in zip(measured, expected):
             m_n = m / self.ir_max_value if self.ir_max_value > 0 else 0.0
@@ -383,7 +462,9 @@ class Localiser:
         likelihood = 1.0 - avg_diff
         return max(likelihood, 1e-3)
 
+    # ----------------- Belief, transforms, map -----------------
     def _init_uniform_belief(self):
+        """Set a uniform belief over all free cells."""
         if not self.free_cells:
             return
 
@@ -396,6 +477,7 @@ class Localiser:
             self.belief[iy][ix] = p0
 
     def _normalize_belief(self, belief):
+        """Normalise a 2D belief grid in-place; fall back to uniform if needed."""
         total = 0.0
         for iy in range(self.map_height):
             for ix in range(self.map_width):
@@ -416,6 +498,7 @@ class Localiser:
                 belief[iy][ix] = p0
 
     def _compute_entropy(self):
+        """Compute Shannon entropy of the current belief (natural log)."""
         H = 0.0
         eps = 1e-12
         for iy in range(self.map_height):
@@ -426,6 +509,11 @@ class Localiser:
         return H
 
     def _compute_position_variance(self):
+        """
+        Compute variance of position in world coordinates based on the belief.
+        Returns:
+            dict with var_x, var_y, total_var (m^2).
+        """
         mean_x = 0.0
         mean_y = 0.0
         for iy in range(self.map_height):
@@ -453,6 +541,10 @@ class Localiser:
         return {"var_x": var_x, "var_y": var_y, "total_var": var_x + var_y}
 
     def _world_from_cell(self, iy, ix):
+        """
+        Convert grid indices (iy, ix) to world coordinates (x, y).
+        Grid is centered at (0, 0) with given cell_size.
+        """
         width_m = self.map_width * self.cell_size
         height_m = self.map_height * self.cell_size
 
@@ -465,6 +557,12 @@ class Localiser:
         return world_x, world_y
 
     def _build_default_map(self):
+        """
+        Build the occupancy grid used for localisation and planning.
+
+        Returns:
+            2D list: world_map[h][w], where 0 = free space, 1 = obstacle.
+        """
         world_map = [
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],  # iy = 19 (was 0)
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],  # iy = 18 (was 1)
@@ -486,7 +584,11 @@ class Localiser:
             [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],  # iy = 2  (was 17)
             [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],  # iy = 1  (was 18)
             [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],  # iy = 0  (was 19)]
-         ]
-    
+        ]
+        
         print("[localiser] Using REAL Webots occupancy grid")
+
+       
+     
+        return world_map
 

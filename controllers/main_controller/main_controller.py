@@ -27,7 +27,7 @@ EXPERIMENT_MODE = "adaptive"
 GOAL_TOL = 0.05
 
 # Hard cap on control steps so the sim always ends
-MAX_STEPS = 100000
+MAX_STEPS = 50000
 
 
 def sanity_check_devices(robot):
@@ -47,7 +47,10 @@ def sanity_check_devices(robot):
 
 
 def compute_top_right_goal(localiser):
-  
+    """
+    Choose the 'top-right' goal as the free cell whose WORLD coordinates
+    (x, y) have the largest x + y.
+    """
     world_map = localiser.world_map
     h = len(world_map)
     w = len(world_map[0])
@@ -258,3 +261,28 @@ while robot.step(TIME_STEP) != -1:
         reached_goal = True
         break
 
+print("[main_controller] Simulation ended, exporting logs...")
+
+if EXPERIMENT_MODE == "adaptive":
+    with open("confidence_history.csv", "w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(["step", "confidence"])
+        for step_idx, conf_val in lost_detector.conf_history:
+            writer.writerow([step_idx, conf_val])
+    print("[main_controller] Saved confidence_history.csv")
+
+log_filename = (
+    "experiment_log_adaptive.csv"
+    if EXPERIMENT_MODE == "adaptive"
+    else "experiment_log_baseline.csv"
+)
+
+with open(log_filename, "w", newline="") as f:
+    writer = csv.writer(f)
+    writer.writerow(csv_header)
+    writer.writerows(log_rows)
+
+print(f"[main_controller] Saved {log_filename}")
+print(f"[main_controller] reached_goal={reached_goal}, "
+      f"final_path_length={accum_path_len:.3f} m")
+print("[main_controller] Done.")
