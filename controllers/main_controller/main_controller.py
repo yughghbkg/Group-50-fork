@@ -7,6 +7,7 @@ from lost_detector import LostDetector
 from replanner import Replanner
 import sys
 import csv
+import math
 
 REQUIRED_DEVICES = [
     "left wheel motor",
@@ -17,6 +18,16 @@ REQUIRED_DEVICES = [
 ] + [f"ps{i}" for i in range(8)]
 
 TIME_STEP = 64
+
+# "baseline" = no lost detection / replanning
+# "adaptive" = full system with lost detection + replanning
+EXPERIMENT_MODE = "adaptive"
+
+# Distance threshold (meters) for "reached goal"
+GOAL_TOL = 0.05
+
+# Hard cap on control steps so the sim always ends
+MAX_STEPS = 100000
 
 
 def sanity_check_devices(robot):
@@ -35,9 +46,45 @@ def sanity_check_devices(robot):
     print("[sanity] all required devices found.")
 
 
-# ===========================================
-# Initialization
-# ===========================================
+def compute_top_right_goal(localiser):
+  
+    world_map = localiser.world_map
+    h = len(world_map)
+    w = len(world_map[0])
+    cell_size = localiser.cell_size
+
+    width_m = w * cell_size
+    height_m = h * cell_size
+    origin_x = -width_m / 2.0
+    origin_y = -height_m / 2.0
+
+    best_score = -1e9
+    best_world = None
+    best_cell = None
+
+    for iy in range(h):
+        for ix in range(w):
+            if world_map[iy][ix] != 0:
+                continue
+            wx = origin_x + (ix + 0.5) * cell_size
+            wy = origin_y + (iy + 0.5) * cell_size
+            score = wx + wy
+            if score > best_score:
+                best_score = score
+                best_world = (wx, wy)
+                best_cell = (iy, ix)
+
+    if best_world is None:
+        print("[main_controller][FATAL] No free cell found for goal!")
+        sys.exit(1)
+
+    print(
+        f"[main_controller] Goal cell chosen as (iy={best_cell[0]}, ix={best_cell[1]}), "
+        f"world coords={best_world}"
+    )
+    return best_world
+
+
 robot = Robot()
 
 print("=== DEVICE LIST BEGIN ===")
@@ -46,11 +93,10 @@ for i in range(robot.getNumberOfDevices()):
     print(dev.getName(), "| type:", dev.getNodeType())
 print("=== DEVICE LIST END ===")
 
-print("[main_controller] Init…")
+print(f"[main_controller] Init… (EXPERIMENT_MODE={EXPERIMENT_MODE})")
 
 sanity_check_devices(robot)
 
-# NEW: set up motors here so we can directly control them in BACKOFF mode
 left_motor = robot.getDevice("left wheel motor")
 right_motor = robot.getDevice("right wheel motor")
 left_motor.setPosition(float('inf'))
@@ -58,112 +104,182 @@ right_motor.setPosition(float('inf'))
 left_motor.setVelocity(0.0)
 right_motor.setVelocity(0.0)
 
-# 1) Localisation (Markov + odom)
 localiser = Localiser(robot)
-
-# 2) Planner (we pass localiser so it can use heading)
 planner = Planner(robot, localiser)
 
-# 3) Lost detector
-lost_detector = LostDetector(robot)
+if EXPERIMENT_MODE == "adaptive":
+    lost_detector = LostDetector(robot)
+    replanner = Replanner(robot, planner, localiser, lost_detector)
+else:
+    lost_detector = None
+    replanner = None
 
-# 4) Replanner
-replanner = Replanner(robot, planner, localiser, lost_detector)
-
-# ============================================================
-# Set the world map for A*
-# ============================================================
 planner.set_map(localiser.world_map)
 
-# ============================================================
-# Goal (world coordinates)
-# ============================================================
-goal = (0.2, 0.2)   # TODO: adjust for your maze
-replanner.set_goal(goal)
+goal = compute_top_right_goal(localiser)
+print(f"[main_controller] Final goal (world coords) = {goal}")
+if replanner is not None:
+    replanner.set_goal(goal)
 
-# ============================================================
-# Initial planning (first path)
-# ============================================================
-start = localiser.estimate_position()
+if EXPERIMENT_MODE == "baseline":
+    odom_x, odom_y, _ = localiser.estimate_pose()
+    start = (odom_x, odom_y)
+else:
+    start = localiser.estimate_position()
+
 planner.plan(start, goal)
-
 print(f"[main_controller] First plan from {start} → {goal}")
 
-# ===========================================
-# Main Loop
-# ===========================================
+if not planner.path:
+    print("[main_controller] No feasible path found to the goal. "
+          "Check your occupancy grid versus the Webots maze.")
+    with open(
+        "experiment_log_adaptive.csv" if EXPERIMENT_MODE == "adaptive"
+        else "experiment_log_baseline.csv",
+        "w",
+        newline=""
+    ) as f:
+        writer = csv.writer(f)
+        writer.writerow([
+            "step", "odom_x", "odom_y",
+            "map_x", "map_y",
+            "dist_to_goal_map", "dist_to_goal_odom",
+            "confidence", "is_lost",
+        ])
+    sys.exit(0)
+
 print("[main_controller] Entering main loop…")
 step_count = 0
+reached_goal = False
 
-# NEW: simple state machine for backing off when lost
 MODE_FOLLOW = 0
 MODE_BACKOFF = 1
 mode = MODE_FOLLOW
 backoff_steps = 0
 turn_steps = 0
 
-# reasonable speed for e-puck
 BACKOFF_SPEED = 3.0
 
-while robot.step(TIME_STEP) != -1:
+prev_odom_x, prev_odom_y, _ = localiser.estimate_pose()
+accum_path_len = 0.0
 
-    # 1) Localisation update
+log_rows = []
+csv_header = [
+    "step",
+    "odom_x", "odom_y",
+    "map_x", "map_y",
+    "dist_to_goal_map", "dist_to_goal_odom",
+    "confidence", "is_lost",
+]
+
+while robot.step(TIME_STEP) != -1:
+    step_count += 1
+    if step_count > MAX_STEPS:
+        print(f"[main_controller] Reached MAX_STEPS={MAX_STEPS}, stopping simulation.")
+        break
+
     localiser.update()
 
-    # 2) Lost detection
-    lost_detector.check(localiser)
+    odom_x, odom_y, _ = localiser.estimate_pose()
+    map_x, map_y = localiser.estimate_position()
 
-    # 3) If we just became lost while in FOLLOW mode → enter BACKOFF mode
-    if lost_detector.is_lost and mode == MODE_FOLLOW:
-        print("[main_controller] Following planned path, but I am lost")
-        mode = MODE_BACKOFF
-        backoff_steps = 20   # reverse for 20 ticks
-        turn_steps = 20      # then turn for 20 ticks
+    dist_to_goal_map = math.hypot(map_x - goal[0], map_y - goal[1])
+    dist_to_goal_odom = math.hypot(odom_x - goal[0], odom_y - goal[1])
 
-    # 4) Handle BACKOFF behaviour (reverse + turn), then replan once
-    if mode == MODE_BACKOFF:
-        est_before = localiser.estimate_position()
-        print(f"[main_controller] I am lost, I will back off. BEFORE: pose={est_before}, backoff_steps={backoff_steps}, turn_steps={turn_steps}")
+    step_dist = math.hypot(odom_x - prev_odom_x, odom_y - prev_odom_y)
+    accum_path_len += step_dist
+    prev_odom_x, prev_odom_y = odom_x, odom_y
 
-        if backoff_steps > 0:
-            # reverse away from the wall
-            left_motor.setVelocity(-BACKOFF_SPEED)
-            right_motor.setVelocity(-BACKOFF_SPEED)
-            backoff_steps -= 1
+    conf = ""
+    is_lost = ""
 
-        elif turn_steps > 0:
-            # rotate in place to face away from the wall
-            left_motor.setVelocity(BACKOFF_SPEED)
-            right_motor.setVelocity(-BACKOFF_SPEED)
-            turn_steps -= 1
+    if EXPERIMENT_MODE == "adaptive":
+        lost_detector.check(localiser)
+        conf = lost_detector.confidence
+        is_lost = int(lost_detector.is_lost)
+
+        if lost_detector.is_lost and mode == MODE_FOLLOW:
+            print("[main_controller] Following planned path, but I am lost")
+            mode = MODE_BACKOFF
+            backoff_steps = 20
+            turn_steps = 20
+
+        if mode == MODE_BACKOFF:
+            est_before = localiser.estimate_position()
+            print(
+                f"[main_controller] I am lost, I will back off. BEFORE: "
+                f"pose={est_before}, backoff_steps={backoff_steps}, turn_steps={turn_steps}"
+            )
+
+            if backoff_steps > 0:
+                left_motor.setVelocity(-BACKOFF_SPEED)
+                right_motor.setVelocity(-BACKOFF_SPEED)
+                backoff_steps -= 1
+
+            elif turn_steps > 0:
+                left_motor.setVelocity(BACKOFF_SPEED)
+                right_motor.setVelocity(-BACKOFF_SPEED)
+                turn_steps -= 1
+
+            else:
+                print("[main_controller] Backoff complete, I will replan my route now")
+                replanner.replan()
+                mode = MODE_FOLLOW
 
         else:
-            # finished backing off: now replan once and return to FOLLOW mode
-            print("[main_controller] Backoff complete, I will replan my route now")
-            replanner.replan()
-            mode = MODE_FOLLOW
+            planner.follow_path()
 
-        # IMPORTANT: skip normal path following while backing off
-        step_count += 1
-        if step_count % 50 == 0:
-            est = localiser.estimate_position()
-            print(f"[main_controller] This is control step {step_count}, I estimate my position as={est}")
-        continue
+    else:
+        planner.follow_path()
 
-    # 5) Normal path following (only when not backing off)
-    planner.follow_path()
+    log_rows.append([
+        step_count,
+        odom_x, odom_y,
+        map_x, map_y,
+        dist_to_goal_map, dist_to_goal_odom,
+        conf, is_lost,
+    ])
 
-    # Debug heartbeat
-    step_count += 1
     if step_count % 50 == 0:
-        est = localiser.estimate_position()
-        print(f"[main_controller] This is control step {step_count}, I estimate my position as={est}")
-        
-print("[main_controller] Simulation ended, exporting confidence history...")
+        print(
+            f"[main_controller] Step {step_count}, "
+            f"odom=({odom_x:.3f}, {odom_y:.3f}), "
+            f"map=({map_x:.3f}, {map_y:.3f}), "
+            f"dist_to_goal_map={dist_to_goal_map:.3f}"
+        )
 
-with open("confidence_history.csv", "w") as f:
-    f.write("step,confidence\n")
-    for step, conf in lost_detector.conf_history:
-        f.write(f"{step},{conf}\n")
+    if dist_to_goal_map < GOAL_TOL:
+        print(
+            f"[main_controller] Goal reached at step {step_count}! "
+            f"Markov_est=({map_x:.3f}, {map_y:.3f}), "
+            f"odom=({odom_x:.3f}, {odom_y:.3f}), "
+            f"approx path length={accum_path_len:.3f} m"
+        )
+        reached_goal = True
+        break
 
-print("[main_controller] Saved confidence_history.csv")
+print("[main_controller] Simulation ended, exporting logs...")
+
+if EXPERIMENT_MODE == "adaptive":
+    with open("confidence_history.csv", "w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(["step", "confidence"])
+        for step_idx, conf_val in lost_detector.conf_history:
+            writer.writerow([step_idx, conf_val])
+    print("[main_controller] Saved confidence_history.csv")
+
+log_filename = (
+    "experiment_log_adaptive.csv"
+    if EXPERIMENT_MODE == "adaptive"
+    else "experiment_log_baseline.csv"
+)
+
+with open(log_filename, "w", newline="") as f:
+    writer = csv.writer(f)
+    writer.writerow(csv_header)
+    writer.writerows(log_rows)
+
+print(f"[main_controller] Saved {log_filename}")
+print(f"[main_controller] reached_goal={reached_goal}, "
+      f"final_path_length={accum_path_len:.3f} m")
+print("[main_controller] Done.")

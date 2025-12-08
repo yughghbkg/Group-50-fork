@@ -1,16 +1,7 @@
 # replanner.py
 
 class Replanner:
-    """
-    Handles re-planning logic when the robot is detected as "lost".
-
-    Responsibilities:
-      - Store the target point in world coordinates.
-      - When triggered, call the A* planner again using the current estimated pose.
-      - Reset the planner's waypoint index so it starts following the new path.
-      - Optionally reset the lost detector.
-    """
-
+   
     def __init__(self, robot, planner, localiser, lost_detector=None):
         self.robot = robot
         self.planner = planner
@@ -20,30 +11,14 @@ class Replanner:
         # (x, y) in world coordinates
         self.goal = None
 
-    # ---------------------------------------------------------
-    # Public methods
-    # ---------------------------------------------------------
+  
     def set_goal(self, goal_world):
-        """
-        Set the target point in world coordinates.
-        Args:
-            goal_world: tuple (x, y)
-        """
+        
         self.goal = goal_world
-        # print("##############################")
         print(f"[replanner] Goal point set to {self.goal}")
-        # print("##############################")
 
     def replan(self, start_world=None):
-        """
-        Trigger replanning from the given starting pose.
-
-        Args:
-            start_world: (x, y) in world coordinates. If None, the localiser's current estimate is used.
-        """
-        # print("##############################")
-        # print("##############################")
-        # print("##############################")
+       
         if self.goal is None:
             print("[replanner] Error: No goal set, cannot replan!")
             return
@@ -76,6 +51,4 @@ class Replanner:
                 print("[replanner] Warning: lost detector has no reset() method")
 
         print("[replanner] Replanning completed")
-        # print("##############################")
-        # print("##############################")
-        # print("##############################")
+       

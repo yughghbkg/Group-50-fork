@@ -1,4 +1,4 @@
-#VRML_SIM R2023b utf8
+#VRML_SIM R2025a utf8
 
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackground.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
@@ -9,8 +9,8 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/project
 WorldInfo {
 }
 Viewpoint {
-  orientation -0.5029998356302771 0.6741403204469281 0.5408567219732296 1.8871423321130998
-  position -0.10807832066192975 -0.018492037739291478 2.0697587222657092
+  orientation -0.5773502691896258 0.5773502691896258 0.5773502691896258 2.0944
+  position 8.00790199714987e-05 0.00025911176417978013 4.490113720265369
 }
 TexturedBackground {
 }
@@ -23,7 +23,7 @@ RectangleArena {
   wallThickness 0.05
 }
 DEF wall Solid {
-  translation 0.914877 -0.0175679 -0.0250158
+  translation 1.02538 0.545304 -0.0250158
   rotation -8.32677e-17 -1.33146e-17 1 -3.1415853071795863
   children [
     Shape {
@@ -343,8 +343,12 @@ DEF wall Solid {
   ]
 }
 E-puck {
-  translation -0.453347 -0.431196 -0.0301613
-  rotation 5.764747104077286e-05 -1.4006484445373981e-05 0.9999999982402937 1.5618196338492323
+  hidden position_0_0 3796.814507497541
+  hidden position_0_1 -3540.7870776722134
+  hidden rotation_1 0 1 0 1.7705819610707123
+  hidden rotation_2 0 0.9999999999999999 0 2.9294355770733733
+  translation -0.45 -0.45 -6.35469e-05
+  rotation 0.0003695864260721752 1.1838700026885147e-05 0.999999931632857 2.5000011352858493
   controller "main_controller"
 }
 DEF wall Solid {
@@ -645,21 +649,4 @@ DEF wall Solid {
   recognitionColors [
     1 1 1
   ]
-}
-DEF GOAL Solid {
-  translation 0.472863 0.467041 0
-  rotation 0 0 1 -1.5707953071795862
-  children [
-    Shape {
-      appearance Appearance {
-        material Material {
-          diffuseColor 0 1 0
-        }
-      }
-      geometry Plane {
-        size 0.05 0.05
-      }
-    }
-  ]
-  name "solid(33)"
 }
