@@ -8,6 +8,6 @@ centralWidgetVisible: 1
 projectionMode: PERSPECTIVE
 renderingMode: PLAIN
 orthographicViewHeight: 5.28151e+12
-textFiles: 5 "controllers/main_controller/lost_detector.py" "controllers/main_controller/path_planner.py" "controllers/main_controller/plot_confidence.py" "controllers/main_controller/localisation.py" "worlds/maze_world.wbt" "controllers/main_controller/main_controller.py"
+textFiles: 4 "controllers/main_controller/lost_detector.py" "controllers/main_controller/path_planner.py" "controllers/main_controller/plot_confidence.py" "controllers/main_controller/localisation.py" "worlds/maze_world.wbt" "controllers/main_controller/main_controller.py"
 consoles: Console:All:All
 renderingDevicePerspectives: e-puck:camera;1;0.820513;0;0
