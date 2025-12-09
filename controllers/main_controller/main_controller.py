@@ -1,6 +1,8 @@
 # main_controller.py
 
-from controller import Robot
+
+from controller import Supervisor
+
 from localisation import Localiser
 from path_planner import Planner
 from lost_detector import LostDetector
@@ -8,6 +10,7 @@ from replanner import Replanner
 import sys
 import csv
 import math
+
 
 REQUIRED_DEVICES = [
     "left wheel motor",
@@ -26,8 +29,12 @@ EXPERIMENT_MODE = "adaptive"
 # Distance threshold (meters) for "reached goal"
 GOAL_TOL = 0.05
 
+# Desired goal in world coordinates (x, y) i.e. (x, z in Webots)
+GOAL_WORLD = (0.25, 0.25)
+
 # Hard cap on control steps so the sim always ends
-MAX_STEPS = 50000
+MAX_STEPS = 10000
+
 
 
 def sanity_check_devices(robot):
@@ -46,7 +53,7 @@ def sanity_check_devices(robot):
     print("[sanity] all required devices found.")
 
 
-def compute_top_right_goal(localiser):
+def compute_top_right_(localiser):
     """
     Choose the 'top-right' goal as the free cell whose WORLD coordinates
     (x, y) have the largest x + y.
@@ -88,7 +95,7 @@ def compute_top_right_goal(localiser):
     return best_world
 
 
-robot = Robot()
+robot = Supervisor()
 
 print("=== DEVICE LIST BEGIN ===")
 for i in range(robot.getNumberOfDevices()):
@@ -119,10 +126,38 @@ else:
 
 planner.set_map(localiser.world_map)
 
-goal = compute_top_right_goal(localiser)
-print(f"[main_controller] Final goal (world coords) = {goal}")
+# Use fixed goal at (0.45, 0.45)
+goal = GOAL_WORLD
+
+# Optional: print which grid cell this corresponds to
+h = len(localiser.world_map)
+w = len(localiser.world_map[0])
+cell_size = localiser.cell_size
+width_m = w * cell_size
+height_m = h * cell_size
+origin_x = -width_m / 2.0
+origin_y = -height_m / 2.0
+
+goal_x, goal_y = goal
+goal_ix = int(round((goal_x - origin_x) / cell_size - 0.5))
+goal_iy = int(round((goal_y - origin_y) / cell_size - 0.5))
+
+
+# Region in odometry coordinates that we treat as "goal reached"
+GOAL_X_MIN = -0.50
+GOAL_X_MAX = -0.35
+
+GOAL_Y_MIN = -0.50
+GOAL_Y_MAX = -0.30
+
+print(
+    f"[main_controller] Final goal (world coords) = {goal}, "
+    f"approx grid cell (iy={goal_iy}, ix={goal_ix})"
+)
+
 if replanner is not None:
     replanner.set_goal(goal)
+
 
 if EXPERIMENT_MODE == "baseline":
     odom_x, odom_y, _ = localiser.estimate_pose()
@@ -183,12 +218,30 @@ while robot.step(TIME_STEP) != -1:
 
     localiser.update()
 
+    # Estimates
     odom_x, odom_y, _ = localiser.estimate_pose()
     map_x, map_y = localiser.estimate_position()
 
+    # True Webots pose (Supervisor)
+    self_node = robot.getSelf()
+   
+    tx, ty, tz = self_node.getField("translation").getSFVec3f()
+    true_x = tx
+    true_y = ty
+
+
+
+    print(
+        f"[DEBUG] WEBOTS (x,y)=({tx:.3f}, {ty:.3f}) | "
+        f"ODOM (x,y)=({odom_x:.3f}, {odom_y:.3f}) | "
+        f"MARKOV (x,y)=({map_x:.3f}, {map_y:.3f})"
+    )
+
+    # Distances to nominal goal (0.25, 0.25) for plotting/analysis
     dist_to_goal_map = math.hypot(map_x - goal[0], map_y - goal[1])
     dist_to_goal_odom = math.hypot(odom_x - goal[0], odom_y - goal[1])
 
+    # Path length accumulation (from odometry)
     step_dist = math.hypot(odom_x - prev_odom_x, odom_y - prev_odom_y)
     accum_path_len += step_dist
     prev_odom_x, prev_odom_y = odom_x, odom_y
@@ -251,16 +304,23 @@ while robot.step(TIME_STEP) != -1:
             f"dist_to_goal_map={dist_to_goal_map:.3f}"
         )
 
-    if dist_to_goal_map < GOAL_TOL:
+    # --- Manual goal region in odom coordinates (for your experiment) ---
+    if (GOAL_X_MIN <= true_x <= GOAL_X_MAX) and (GOAL_Y_MIN <= true_y <= GOAL_Y_MAX):
         print(
-            f"[main_controller] Goal reached at step {step_count}! "
-            f"Markov_est=({map_x:.3f}, {map_y:.3f}), "
-            f"odom=({odom_x:.3f}, {odom_y:.3f}), "
-            f"approx path length={accum_path_len:.3f} m"
+            f"[main_controller] Goal region reached at step {step_count}! "
+        f"True pose (Webots) = ({true_x:.3f}, {true_y:.3f}), "
+        f"Markov_est=({map_x:.3f}, {map_y:.3f}), "
+        f"odom=({odom_x:.3f}, {odom_y:.3f}), "
+        f"approx path length={accum_path_len:.3f} m"
         )
         reached_goal = True
         break
 
+
+
+    
+print(f"DEBUG odom at end: ({odom_x:.3f}, {odom_y:.3f})")
+   
 print("[main_controller] Simulation ended, exporting logs...")
 
 if EXPERIMENT_MODE == "adaptive":

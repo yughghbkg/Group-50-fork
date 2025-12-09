@@ -5,7 +5,6 @@ class Localiser:
     """
     Odometry + simplified 2D Markov localisation on a grid.
     """
-
     def __init__(
         self,
         robot,
@@ -17,32 +16,41 @@ class Localiser:
     ):
         self.robot = robot
         self.time_step = time_step
-
-        # Odometry setup
+    
+        # --------------------------------------------------
+        # 1. Odometry setup
+        # --------------------------------------------------
         self.wheel_radius = wheel_radius
         self.axle_length = axle_length
-
+    
         self.left_encoder = self.robot.getDevice("left wheel sensor")
         self.right_encoder = self.robot.getDevice("right wheel sensor")
         self.left_encoder.enable(self.time_step)
         self.right_encoder.enable(self.time_step)
+    
+        # --- Initial pose from Webots translation, if Supervisor ---
+       
+  
+    
+        
+        
 
-        # Continuous pose from odometry (origin at initial pose)
-        self.x = 0.0
-        self.y = 0.0
+        # --- Initial pose (pure odometry frame, internal only) ---
+        self.x = -0.14  # or 0.0 – just pick something consistent with your occupancy grid
+        self.y = -0.26
         self.theta = 0.0
-
+        
         self._prev_left = None
         self._prev_right = None
 
-        # IR sensors for the Markov sensor model
+        # --------------------------------------------------
         self.ir_names = [f"ps{i}" for i in range(8)]
         self.ir_sensors = []
         for name in self.ir_names:
             sensor = self.robot.getDevice(name)
             sensor.enable(self.time_step)
             self.ir_sensors.append(sensor)
-
+    
         self.sensor_groups = {
             "front": [0, 7],
             "left": [1, 2],
@@ -51,66 +59,71 @@ class Localiser:
         }
         self.ir_max_value = 3000.0
         self.sensor_max_range = 0.25
-
-        # Markov grid and belief
+    
+        # --------------------------------------------------
+        # 3. Markov grid and belief
+        # --------------------------------------------------
         self.cell_size = cell_size
-
+    
         if world_map is None:
             world_map = self._build_default_map()
-
+    
         self.world_map = world_map
         self.map_height = len(world_map)
         self.map_width = len(world_map[0])
-
+    
         self.belief = [[0.0 for _ in range(self.map_width)]
                        for _ in range(self.map_height)]
-
+    
         self.free_cells = [
             (iy, ix)
             for iy in range(self.map_height)
             for ix in range(self.map_width)
             if self.world_map[iy][ix] == 0
         ]
-
+    
         self._init_uniform_belief()
-
+    
         # Motion model parameters
         self.motion_correct_prob = 0.80
         self.motion_noise_prob = 0.20
-
-        # Debug: initial coordinates & map info
+    
+        # --------------------------------------------------
+        # 4. Debug: initial coordinates & map info
+        # --------------------------------------------------
         print("=" * 50)
         print("[localiser] Initial coordinates and grid-map parameters:")
         print(f"[localiser] Robot initial world coordinates (odometry origin): "
               f"(x={self.x:.3f}m, y={self.y:.3f}m)")
         print(f"[localiser] Robot initial heading angle: theta={self.theta:.3f}rad "
               f"({math.degrees(self.theta):.1f}°)")
-
+    
         width_m = self.map_width * self.cell_size
         height_m = self.map_height * self.cell_size
         origin_x = -width_m / 2.0
         origin_y = -height_m / 2.0
-
+    
         init_ix = int(round((self.x - origin_x) / self.cell_size))
         init_iy = int(round((self.y - origin_y) / self.cell_size))
         init_ix = max(0, min(self.map_width - 1, init_ix))
         init_iy = max(0, min(self.map_height - 1, init_iy))
-
+    
         print(f"\n[localiser] Grid map parameters:")
         print(f"[localiser] Grid map size: {self.map_height} rows × {self.map_width} columns")
         print(f"[localiser] Cell size: {self.cell_size:.3f}m")
         print(f"[localiser] Map physical dimensions: width={width_m:.3f}m, height={height_m:.3f}m")
         print(f"[localiser] Grid-map origin (world coordinates): "
               f"(x={origin_x:.3f}m, y={origin_y:.3f}m)")
-
+    
         print(f"\n[localiser] Grid coordinate corresponding to robot initial world position: "
               f"(iy={init_iy}, ix={init_ix})")
         init_cell_state = "free (traversable)" if self.world_map[init_iy][init_ix] == 0 else "obstacle (blocked)"
         print(f"[localiser] Initial grid cell state: {init_cell_state}")
         print("=" * 50 + "\n")
-
+    
         print("[localiser] init complete")
-
+    
+       
     def update(self):
         """
         One localisation update step:
