@@ -112,3 +112,7 @@ E-puck {
   translation -0.390131 -0.439433
 ```
 
+## 7.Dependencies:
+- Core simulation: No additional Python libraries are required. The main program runs using the Webots Python API and the Python standard library only.
+- Optional visualization scripts: Require NumPy and Matplotlib (pip install numpy matplotlib).
+
