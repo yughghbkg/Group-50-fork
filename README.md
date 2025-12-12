@@ -1,7 +1,7 @@
 # Maze Navigation System fork
 
 The goal of this fork is to improve the **runtime stability and executability** of navigation tasks in maze environments.  
-In the previous version, Markov localisation was implemented using odometry and infrared sensors, with path replanning triggered when localisation confidence dropped. In mazes with complex structures, however, the amount of observable information was often insufficient for the belief to converge reliably. As a result, the system frequently oscillated between localisation correction and replanning within local regions, leading to rapid path switching, visible robot jitter, and unstable task completion. In complex mazes, the robot was generally unable to finish the navigation task.
+In the original system, Markov localisation was implemented using odometry and infrared sensors, with path replanning triggered when localisation confidence dropped. In mazes with complex structures, however, the amount of observable information was often insufficient for the belief to converge reliably. As a result, the system frequently oscillated between localisation correction and replanning within local regions, leading to rapid path switching, visible robot jitter, and unstable task completion. In complex mazes, the robot was generally unable to finish the navigation task.
 
 To address these issues, this version introduces two major changes:  
 (1) replacing the source of localisation information, and  
