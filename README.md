@@ -11,6 +11,8 @@ To address these issues, this version introduces two major changes:
 (1) replacing the source of localisation information, and  
 (2) restructuring and strengthening the map construction and path execution pipeline.
 
+**Note: This version is ready to run out of the box—after downloading the full project, simply open maze_world_new.wbt in Webots and run it. If you want to use/view maze_world.wbt instead, you’ll need to switch maps; the specific steps are provided at the end of this README.**
+
 ## 1. Localisation Source and Structure
 
 On the localisation side, GPS and IMU yaw data provided by Webots are introduced as global pose inputs. The localiser no longer relies on Markov-style probabilistic updates, but instead directly outputs the robot’s pose in world coordinates ((x, y, \theta)). To maintain compatibility with the existing system architecture, the localiser keeps its original interfaces (such as `update`, `estimate_pose`, and `measure_uncertainty`), while internally replacing the probabilistic belief with a deterministic representation based on the grid cell corresponding to the GPS position. Accordingly, the role of the localisation module shifts from state estimation to pose provision, and the system’s focus moves toward whether planning and control can be executed in a stable manner.
@@ -71,9 +73,6 @@ Despite these improvements, the system is still far from solving the broader cha
 Overall, this update makes targeted adjustments to localisation, mapping, planning, and execution based on observed runtime behaviour in simulation, resulting in noticeably more stable navigation in complex maze environments.
 
 ---
-
-**Note: This version is set up to work with the `maze_world_new.wbt`.**
-
 
 
 ## How to test by switching maps or using a random start position
