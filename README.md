@@ -3,10 +3,6 @@
 The goal of this fork is to improve the **runtime stability and executability** of navigation tasks in maze environments.  
 In the previous version, Markov localisation was implemented using odometry and infrared sensors, with path replanning triggered when localisation confidence dropped. In mazes with complex structures, however, the amount of observable information was often insufficient for the belief to converge reliably. As a result, the system frequently oscillated between localisation correction and replanning within local regions, leading to rapid path switching, visible robot jitter, and unstable task completion. In complex mazes, the robot was generally unable to finish the navigation task.
 
-In further system testing, we observed another issue that is largely independent of theoretical localisation accuracy yet significantly affects task success. In structurally complex mazes or environments with insufficient observations, the robot can exhibit persistent orientation jitter, rapid switching between nearby local paths, and repetitive small-scale replanning. Although these behaviours do not necessarily indicate a localisation failure, they can undermine trajectory following at the execution level, causing the robot to oscillate back and forth in the maze or even fail to reach the goal.
-
-Motivated by this practical runtime behaviour, this fork focuses on improving operational stability in complex environments through deterministic pose inputs, map reconstruction consistency, and smoother path execution.
-
 To address these issues, this version introduces two major changes:  
 (1) replacing the source of localisation information, and  
 (2) restructuring and strengthening the map construction and path execution pipeline.
