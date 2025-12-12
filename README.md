@@ -33,7 +33,7 @@ For runtime monitoring, the system keeps the overall structure of anomaly detect
 
 For experimental validation, the updated system is tested on both structurally simple and complex maze maps. A random start position mechanism is introduced to cover navigation behaviour under different initial conditions. The evaluation focuses on runtime stability across varying environment complexity and starting states, rather than optimal paths in a single fixed scenario. (`random_spawn_new.py`)
 
-### 5.1 Stability Evaluation Under Random Initial Conditions (Fork Version)
+### Stability Evaluation Under Random Initial Conditions (Fork Version)
 
 **Aim.**  
 The aim of this fork’s evaluation is not to compare path optimality, but to assess whether the system can reliably execute and complete goal-directed navigation under random initial conditions. In particular, the focus is on avoiding common failure modes such as in-place oscillation, repeated replanning loops, and getting stuck spinning near walls.
