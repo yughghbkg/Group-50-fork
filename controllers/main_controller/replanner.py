@@ -49,6 +49,10 @@ class Replanner:
             except AttributeError:
                 # Non-fatal if reset() doesn't exist
                 print("[replanner] Warning: lost detector has no reset() method")
+            try:
+                self.lost_detector.stall_count = 0
+            except Exception:
+                pass
 
         print("[replanner] Replanning completed")
-       
+      
