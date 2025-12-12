@@ -13,7 +13,7 @@ demo：https://github.com/yughghbkg/Group-50-fork/blob/main/demo/demo-00.00.00.0
 
 ## 1. Localisation Source and Structure
 
-On the localisation side, GPS and IMU yaw data provided by Webots are introduced as global pose inputs. The localiser no longer relies on Markov-style probabilistic updates, but instead directly outputs the robot’s pose in world coordinates ((x, y, \theta)). To maintain compatibility with the existing system architecture, the localiser keeps its original interfaces (such as `update`, `estimate_pose`, and `measure_uncertainty`), while internally replacing the probabilistic belief with a deterministic representation based on the grid cell corresponding to the GPS position. Accordingly, the role of the localisation module shifts from state estimation to pose provision, and the system’s focus moves toward whether planning and control can be executed in a stable manner.
+On the localisation side, GPS and IMU yaw data provided by Webots are introduced as global pose inputs. The localiser no longer relies on Markov-style probabilistic updates, but instead directly outputs the robot’s pose in world coordinates ((x, y, \theta)). To maintain compatibility with the existing system architecture, the localiser keeps its original interfaces, while internally replacing the probabilistic belief with a deterministic representation based on the grid cell corresponding to the GPS position. Accordingly, the role of the localisation module shifts from state estimation to pose provision, and the system’s focus moves toward whether planning and control can be executed in a stable manner.
 
 ## 2. Map Construction and Visualisation
 
