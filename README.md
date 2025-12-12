@@ -3,6 +3,10 @@
 The goal of this update is to improve the **runtime stability and executability** of navigation tasks in maze environments.  
 In the previous version, Markov localisation was implemented using odometry and infrared sensors, with path replanning triggered when localisation confidence dropped. In mazes with complex structures, however, the amount of observable information was often insufficient for the belief to converge reliably. As a result, the system frequently oscillated between localisation correction and replanning within local regions, leading to rapid path switching, visible robot jitter, and unstable task completion. In complex mazes, the robot was generally unable to finish the navigation task.
 
+In further system testing, we observed another issue that is largely independent of theoretical localisation accuracy yet significantly affects task success. In structurally complex mazes or environments with insufficient observations, the robot can exhibit persistent orientation jitter, rapid switching between nearby local paths, and repetitive small-scale replanning. Although these behaviours do not necessarily indicate a localisation failure, they can undermine trajectory following at the execution level, causing the robot to oscillate back and forth in the maze or even fail to reach the goal.
+
+Motivated by this practical runtime behaviour, this fork focuses on improving operational stability in complex environments through deterministic pose inputs, map reconstruction consistency, and smoother path execution.
+
 To address these issues, this version introduces two major changes:  
 (1) replacing the source of localisation information, and  
 (2) restructuring and strengthening the map construction and path execution pipeline.
@@ -28,6 +32,39 @@ For runtime monitoring, the system keeps the overall structure of anomaly detect
 ## 5. Experimental Validation
 
 For experimental validation, the updated system is tested on both structurally simple and complex maze maps. A random start position mechanism is introduced to cover navigation behaviour under different initial conditions. The evaluation focuses on runtime stability across varying environment complexity and starting states, rather than optimal paths in a single fixed scenario. (`random_spawn_new.py`)
+
+### 5.1 Stability Evaluation Under Random Initial Conditions (Fork Version)
+
+**Aim.**  
+The aim of this fork’s evaluation is not to compare path optimality, but to assess whether the system can reliably execute and complete goal-directed navigation under random initial conditions. In particular, the focus is on avoiding common failure modes such as in-place oscillation, repeated replanning loops, and getting stuck spinning near walls.
+
+**Environment & goal.**  
+All experiments were conducted in **Webots R2025a** using the **e-puck** robot model. Unless otherwise stated, the new maze world (`maze_world_new.wbt`) is used as the representative environment. The goal location is fixed near the green GOAL region in the new map, specified in the controller via:
+- `set_goal_world(0.52, 0.27)`
+
+A run is considered successful when the Euclidean distance between the robot’s current position and the goal is below **0.05 m**.
+
+**Map selection.**  
+To cover different levels of structural complexity, two maze maps were tested: one with a simpler layout and one with a more complex layout. Both maps use the same controller and the same planning–execution pipeline, so the comparison primarily reflects stability and executability across environments rather than controller changes.
+
+**Randomised start state.**  
+Before each trial, `random_spawn_new.py` samples a random start position from the walkable region of the occupancy grid and randomises the robot’s initial heading. Sampling is constrained to remain within a closed navigable region, and a minimum obstacle clearance is enforced (`clearance_cells = 1`). The script reads the translation and boundary parameters of the `RectangleArena`, converts sampled grid coordinates into world coordinates, and writes the updated pose back into the `.wbt` file. This ensures that all generated start states remain valid and within the arena bounds.
+
+**Time limit & repetitions.**  
+For each map, **30** independent trials were conducted with different random start positions and headings. Each run was capped at **15 minutes** of simulated time. If the robot met the goal condition within the time limit, the trial was marked as a success; otherwise it was recorded as a timeout failure.
+
+**Logged outputs.**  
+During execution, the visualisation window provides the planned path, real-time position updates, and a live confidence curve. After each run, the system logs data to CSV files, including:
+- Robot pose at each step and distance-to-goal: `experiment_log_adaptive.csv`
+- Confidence time series from the lost detector: `confidence_history.csv`
+
+Console output additionally reports whether the goal was reached, along with the step count at completion and the estimated path length.
+
+**Results.**  
+Under this setup, the robot successfully reached the goal in **30 out of 30** randomised trials on each of the two maps within the 15-minute limit. These results indicate that the forked version provides improved execution stability under random initial conditions: even when brief contact events or short-lived anomalies occur, the system is able to maintain feasible trajectory-following behaviour and eventually complete navigation.
+
+**Limitations & future work.**  
+Despite these improvements, the system is still far from solving the broader challenge of reliable navigation under global localisation failure. Future work should prioritise more accurate localisation and perception models (e.g., refining the infrared observation model, or replacing the IR array with more reliable sensing such as lidar/ultrasonic). Another promising direction is to move beyond fixed, hand-designed control logic by incorporating reinforcement-learning-based policies.
 
 ## 6. Summary
 
